@@ -86,7 +86,7 @@ export function SubscriptionsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Plan liya"
           value={subs.length}
@@ -327,7 +327,7 @@ function FreeUserList({
   }
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
       {users.map((u) => (
         <div key={u.id} className="rounded-xl border border-line p-4">
           <div className="flex items-center gap-3">

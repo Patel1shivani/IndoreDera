@@ -47,7 +47,7 @@ export function PlansPage({ onNavigate }: { onNavigate: (id: PageId) => void }) 
         title="Plans edit karein"
         subtitle="Har change turant website par chala jaata hai"
       >
-        <div className="grid gap-5 xl:grid-cols-3">
+        <div className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-3">
           {siteData.plans.map((p) => {
             const stat = stats.find((s) => s.plan.id === p.id);
 

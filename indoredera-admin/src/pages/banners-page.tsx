@@ -112,7 +112,7 @@ export function BannersPage() {
           </div>
 
           {/* Live preview — banner website par kaisa lagega */}
-          <div className="overflow-hidden rounded-xl border border-line">
+          <div className="self-start overflow-hidden rounded-xl border border-line">
             {draft.image ? (
               <img src={draft.image} alt="" className="h-28 w-full object-cover" />
             ) : (
@@ -158,7 +158,7 @@ export function BannersPage() {
             {list.length === 0 ? (
               <EmptyState icon={Icons.banners} title="Is audience ke liye koi banner nahi" />
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {list.map((b) => (
                   <div
                     key={b.id}

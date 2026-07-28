@@ -94,7 +94,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (id: PageId) => void
         )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           label="Live listings"
           value={s.live.length}
@@ -178,7 +178,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (id: PageId) => void
         </div>
       </Card>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         <Card
           icon={Icons.pending}
           tone="warn"
@@ -340,7 +340,7 @@ export function DashboardPage({ onNavigate }: { onNavigate: (id: PageId) => void
           </button>
         }
       >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {pages
             .filter((p) => p.id !== "dashboard" && p.id !== "guide")
             .map((p) => {

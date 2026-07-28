@@ -53,7 +53,7 @@ export function TestimonialsPage() {
             hint="Website ke testimonials section se naya feedback yahan aayega."
           />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {pending.map((t) => (
               <Row
                 key={t.id}
@@ -93,7 +93,7 @@ export function TestimonialsPage() {
         {approved.length === 0 ? (
           <EmptyState icon={Icons.star} title="Abhi koi testimonial live nahi hai" />
         ) : (
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="grid gap-4 lg:grid-cols-2">
             {approved.map((t) => (
               <Row
                 key={t.id}
