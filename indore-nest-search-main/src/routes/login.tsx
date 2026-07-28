@@ -90,7 +90,7 @@ function LoginPage() {
               required
               autoComplete="username"
               className="field pl-11"
-              placeholder="rakesh@gmail.com ya 98260 00000"
+              placeholder="rakesh@gmail.com ya 8962504009"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
             />

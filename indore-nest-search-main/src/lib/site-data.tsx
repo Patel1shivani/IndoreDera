@@ -272,7 +272,13 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
   // ready hone ke baad hi likhein, warna mount par defaults save ho jaate hain
   useEffect(() => {
     if (!ready) return;
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    } catch {
+      // uploaded photos base64 me hoti hain — quota bhar jaane par bhi app
+      // chalti rehni chahiye, shared server par data phir bhi chala jaata hai
+      console.warn("Local storage bhar gaya — listing sirf server par save hui.");
+    }
     void pushSiteData(data);
   }, [data, ready]);
 

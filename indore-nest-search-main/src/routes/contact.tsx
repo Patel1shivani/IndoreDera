@@ -42,8 +42,8 @@ function Contact() {
         <div className="space-y-4">
           {[
             { k: "Office", v: "Vijay Nagar, Indore, MP 452010", icon: GoLocation },
-            { k: "Phone", v: "+91 98260 00000", icon: GoDeviceMobile },
-            { k: "Email", v: "hello@indoredera.in", icon: GoMail },
+            { k: "Phone", v: "+91 8962504009", icon: GoDeviceMobile },
+            { k: "Email", v: "shivimukati74@gmail.com", icon: GoMail },
             { k: "Timings", v: "Mon – Sat, 10am – 7pm", icon: GoClock },
           ].map((i) => (
             <div
@@ -85,7 +85,7 @@ function Contact() {
               <label htmlFor="cphone" className="mb-1.5 block text-sm font-medium">
                 Mobile / Email
               </label>
-              <input id="cphone" required className="field" placeholder="98260 00000" />
+              <input id="cphone" required className="field" placeholder="8962504009" />
             </div>
             <div>
               <label htmlFor="cmsg" className="mb-1.5 block text-sm font-medium">

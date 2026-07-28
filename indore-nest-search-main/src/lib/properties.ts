@@ -15,7 +15,10 @@ export interface Property {
   bhk?: string;
   furnishing: "Furnished" | "Semi-Furnished" | "Unfurnished";
   preferred: string;
+  /** Cover photo — card aur og:image me yahi use hoti hai. */
   image: string;
+  /** Poori gallery (cover samet). Purani listings me nahi hoti, isliye optional. */
+  images?: string[];
   featured?: boolean;
   amenities: string[];
   description: string;
@@ -136,7 +139,20 @@ export const localities = [
 const img = (seed: string) =>
   `https://images.unsplash.com/${seed}?auto=format&fit=crop&w=1000&q=70`;
 
-export const properties: Property[] = [
+/* Seed listings ke liye extra interior photos — har listing ki gallery 5 photo ki
+   ban jaati hai. Owner-submitted listings apni khud ki photos laati hain. */
+const galleryPool = [
+  "photo-1522708323590-d24dbb6b0267",
+  "photo-1493809842364-78817add7ffb",
+  "photo-1484154218962-a197022b5858",
+  "photo-1502005229762-cf1b2da7c5d6",
+  "photo-1600585154340-be6161a56a0c",
+  "photo-1600566753086-00f18fb6b3ea",
+  "photo-1616486338812-3dadae4b4ace",
+  "photo-1600607687920-4e2a09cf159d",
+];
+
+const seedProperties: Property[] = [
   {
     id: "vn-2bhk-01",
     title: "2 BHK Semi-Furnished Flat near Scheme 54",
@@ -305,6 +321,21 @@ export const properties: Property[] = [
     postedAgo: "2 din pehle",
   },
 ];
+
+/* Har seed listing ko cover + 4 interior photos ki gallery mil jaati hai. */
+export const properties: Property[] = seedProperties.map((p, i) => {
+  const start = (i * 2) % (galleryPool.length - 3);
+  return {
+    ...p,
+    images: [p.image, ...galleryPool.slice(start, start + 4).map(img)],
+  };
+});
+
+/** Gallery — nayi listings me `images`, purani me sirf cover photo. */
+export function propertyImages(p: Property): string[] {
+  const list = (p.images ?? []).filter(Boolean);
+  return list.length ? list : [p.image];
+}
 
 export const formatRent = (n: number) => `₹${n.toLocaleString("en-IN")}`;
 

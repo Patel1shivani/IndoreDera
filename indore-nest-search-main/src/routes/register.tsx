@@ -192,7 +192,7 @@ function RegisterPage() {
               type="tel"
               autoComplete="tel"
               className="field pl-11"
-              placeholder="98260 00000"
+              placeholder="8962504009"
               value={form.phone}
               onChange={set("phone")}
             />

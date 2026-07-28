@@ -1,4 +1,4 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   GoArrowLeft,
   GoCheck,
@@ -8,14 +8,14 @@ import {
   GoPerson,
   GoShieldCheck,
 } from "react-icons/go";
-import { formatRent, getProperty, propertyTypes } from "@/lib/properties";
+import { ImageCarousel } from "@/components/image-carousel";
+import { formatRent, getProperty, propertyImages, propertyTypes } from "@/lib/properties";
+import { useSiteData } from "@/lib/site-data";
 
 export const Route = createFileRoute("/properties/$propertyId")({
-  loader: ({ params }) => {
-    const property = getProperty(params.propertyId);
-    if (!property) throw notFound();
-    return property;
-  },
+  /* Seed listing server par mil jaati hai (SEO ke liye). Owner ki apni listing
+     sirf browser storage me hoti hai — wo component me site-data se aati hai. */
+  loader: ({ params }) => getProperty(params.propertyId) ?? null,
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [
@@ -30,7 +30,35 @@ export const Route = createFileRoute("/properties/$propertyId")({
 });
 
 function PropertyDetail() {
-  const p = Route.useLoaderData();
+  const loaded = Route.useLoaderData();
+  const { propertyId } = Route.useParams();
+  const { data, ready } = useSiteData();
+
+  // site-data me owner ki nayi listings bhi hoti hain aur seed listings ka
+  // latest version bhi — isliye pehle wahan dekhte hain
+  const p = data.listings.find((l) => l.id === propertyId) ?? loaded;
+
+  if (!p) {
+    return (
+      <div className="mx-auto max-w-3xl px-4 py-20 text-center">
+        {ready ? (
+          <>
+            <h1 className="text-2xl tracking-wide">Ye listing nahi mili</h1>
+            <p className="mt-2 text-muted-foreground">
+              Shayad owner ne hata di ho ya link purana ho gaya ho.
+            </p>
+            <Link to="/properties" className="btn-primary mt-6">
+              <GoArrowLeft aria-hidden="true" className="h-4 w-4" />
+              Sabhi rentals dekhein
+            </Link>
+          </>
+        ) : (
+          <div className="h-72 animate-pulse rounded-3xl border border-border bg-card" />
+        )}
+      </div>
+    );
+  }
+
   const type = propertyTypes.find((t) => t.value === p.type);
   const TypeIcon = type?.icon;
 
@@ -44,9 +72,7 @@ function PropertyDetail() {
         Back to all rentals
       </Link>
 
-      <div className="mt-4 overflow-hidden rounded-3xl shadow-lifted">
-        <img src={p.image} alt={p.title} className="h-[22rem] w-full object-cover" />
-      </div>
+      <ImageCarousel images={propertyImages(p)} alt={p.title} className="mt-4" />
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1.7fr_1fr]">
         <div>

@@ -74,6 +74,30 @@ function toPublicUser({ id, name, phone, email, role, plan }: StoredUser): User 
   return { id, name, phone, email, role, plan };
 }
 
+/**
+ * Server aur browser, dono ki user list ko jodta hai.
+ *
+ * Pehle server ki list seedha localStorage ko replace kar deti thi — matlab jo
+ * account server band hone ke dauraan bana, wo agle reload par gayab ho jaata
+ * tha aur "email ya password galat hai" aata tha. Ab dono taraf ke accounts
+ * bache rehte hain; takraav me server jeet-ta hai.
+ */
+function mergeUsers(remote: StoredUser[], local: StoredUser[]): StoredUser[] {
+  const keysOf = (u: StoredUser) =>
+    [u.id, u.email?.toLowerCase(), normalizePhone(u.phone ?? "")].filter(Boolean);
+
+  const merged = [...remote];
+  const seen = new Set(remote.flatMap(keysOf));
+
+  for (const user of local) {
+    const keys = keysOf(user);
+    if (keys.some((k) => seen.has(k))) continue; // server par pehle se hai
+    merged.push(user);
+    keys.forEach((k) => seen.add(k));
+  }
+  return merged;
+}
+
 async function hashPassword(password: string): Promise<string> {
   const bytes = new TextEncoder().encode(`indoredera:${password}`);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
@@ -117,6 +141,10 @@ type AuthContextValue = {
     role: Exclude<Role, "admin">;
   }) => Promise<User>;
   logout: () => void;
+  /** Profile page se naam/phone/email update karta hai. */
+  updateProfile: (input: { name: string; phone: string; email: string }) => User;
+  /** Purana password verify karke naya set karta hai. */
+  changePassword: (input: { current: string; next: string }) => Promise<void>;
   /** Plan kharidne ke baad user par save karta hai. */
   activatePlan: (plan: UserPlan) => void;
   /** One-time plan se ek listing credit kam karta hai. */
@@ -132,11 +160,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let cancelled = false;
 
     async function bootstrap() {
-      // shared server par users hain to unhe localStorage me le aayein, taaki
-      // site aur admin panel dono ek hi user list dekhein
+      // shared server ke users ko local users ke saath merge karte hain, taaki
+      // site aur admin panel ek hi list dekhein aur koi account khoye nahi
       const remote = await fetchRemoteState<unknown, StoredUser>();
       if (remote?.users?.length) {
-        window.localStorage.setItem(USERS_KEY, JSON.stringify(remote.users));
+        const merged = mergeUsers(remote.users, readUsers());
+        window.localStorage.setItem(USERS_KEY, JSON.stringify(merged));
+        // jo account sirf browser me tha use server par bhi bhej dein
+        if (merged.length !== remote.users.length) void pushUsers(merged);
       }
 
       const users = readUsers();
@@ -247,6 +278,67 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
+  /** Register jaisi hi validation — bas apne hi record ko chhod kar duplicate check hota hai. */
+  const updateProfile = useCallback<AuthContextValue["updateProfile"]>(
+    ({ name, phone, email }) => {
+      if (!user) throw new AuthError("Pehle login karein.");
+
+      const users = readUsers();
+      const index = users.findIndex((u) => u.id === user.id);
+      if (index === -1) throw new AuthError("Account nahi mila. Dobara login karein.");
+
+      const trimmedName = name.trim();
+      const normalizedEmail = email.trim().toLowerCase();
+      const normalizedPhone = normalizePhone(phone);
+
+      if (trimmedName.length < 2) {
+        throw new AuthError("Naam kam se kam 2 character ka hona chahiye.");
+      }
+      if (normalizedPhone.length !== 10) {
+        throw new AuthError("Mobile number 10 digit ka hona chahiye.");
+      }
+      if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
+        throw new AuthError("Email sahi format me likhein.");
+      }
+      if (users.some((u) => u.id !== user.id && u.email.toLowerCase() === normalizedEmail)) {
+        throw new AuthError("Yeh email kisi aur account par registered hai.");
+      }
+      if (users.some((u) => u.id !== user.id && normalizePhone(u.phone) === normalizedPhone)) {
+        throw new AuthError("Yeh mobile number kisi aur account par registered hai.");
+      }
+
+      users[index] = {
+        ...users[index],
+        name: trimmedName,
+        phone: normalizedPhone,
+        email: normalizedEmail,
+      };
+      writeUsers(users);
+      const publicUser = toPublicUser(users[index]);
+      setUser(publicUser);
+      return publicUser;
+    },
+    [user],
+  );
+
+  const changePassword = useCallback<AuthContextValue["changePassword"]>(
+    async ({ current, next }) => {
+      if (!user) throw new AuthError("Pehle login karein.");
+      if (next.length < 6) throw new AuthError("Naya password kam se kam 6 character ka rakhein.");
+
+      const users = readUsers();
+      const index = users.findIndex((u) => u.id === user.id);
+      if (index === -1) throw new AuthError("Account nahi mila. Dobara login karein.");
+      if (users[index].passwordHash !== (await hashPassword(current))) {
+        throw new AuthError("Purana password galat hai.");
+      }
+
+      users[index] = { ...users[index], passwordHash: await hashPassword(next) };
+      writeUsers(users);
+    },
+    [user],
+  );
+
   const activatePlan = useCallback(
     (plan: UserPlan) => {
       patchUser({ plan });
@@ -275,10 +367,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       login,
       register,
       logout,
+      updateProfile,
+      changePassword,
       activatePlan,
       consumeListingCredit,
     }),
-    [user, ready, login, register, logout, activatePlan, consumeListingCredit],
+    [
+      user,
+      ready,
+      login,
+      register,
+      logout,
+      updateProfile,
+      changePassword,
+      activatePlan,
+      consumeListingCredit,
+    ],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

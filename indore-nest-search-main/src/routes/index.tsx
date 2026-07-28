@@ -1,7 +1,15 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { GoCommentDiscussion, GoLocation, GoPersonAdd, GoSearch } from "react-icons/go";
+import {
+  GoCommentDiscussion,
+  GoCreditCard,
+  GoHomeFill,
+  GoLocation,
+  GoPersonAdd,
+  GoSearch,
+} from "react-icons/go";
 import { BannerStrip } from "@/components/banner-strip";
+import { FancySelect } from "@/components/fancy-select";
 import { LoginGate } from "@/components/login-gate";
 import { PropertyCard } from "@/components/property-card";
 import { TestimonialsSection } from "@/components/testimonials-section";
@@ -50,6 +58,13 @@ const steps = [
   },
 ];
 
+const budgetOptions = [
+  { value: "5000", label: "Upto ₹5,000" },
+  { value: "10000", label: "Upto ₹10,000" },
+  { value: "20000", label: "Upto ₹20,000" },
+  { value: "50000", label: "Upto ₹50,000" },
+];
+
 function Home() {
   const navigate = useNavigate();
   const { user, ready } = useAuth();
@@ -80,7 +95,8 @@ function Home() {
 
   return (
     <>
-      <section className="hero-surface">
+      {/* relative z-20 — warna neeche wale animated cards dropdown ke upar aa jaate hain */}
+      <section className="hero-surface relative z-20">
         <div className="mx-auto max-w-7xl px-4 py-16 text-center sm:py-24">
           <span className="badge-green animate-drop-in">{hero.badge}</span>
           <h1 className="animate-rise-in delay-step-1 mx-auto mt-5 max-w-3xl text-4xl leading-tight tracking-wide sm:text-6xl">
@@ -91,9 +107,11 @@ function Home() {
             {hero.subtitle}
           </p>
 
+          {/* form par relative z-30 — animate-rise-in har block ka apna stacking context banata
+              hai, isliye warna neeche wale "Popular" chips dropdown ko dhak lete hain */}
           <form
             onSubmit={onSearch}
-            className="animate-rise-in delay-step-3 mx-auto mt-9 grid max-w-4xl gap-3 rounded-3xl border border-border bg-card p-4 shadow-lifted"
+            className="animate-rise-in delay-step-3 relative z-30 mx-auto mt-9 grid max-w-4xl gap-3 rounded-3xl border border-border bg-card p-4 shadow-lifted"
           >
             <div className="relative">
               <GoSearch
@@ -109,44 +127,38 @@ function Home() {
               />
             </div>
             <div className="grid gap-3 sm:grid-cols-4">
-              <select
-                className="field"
+              <FancySelect
                 value={type}
-                onChange={(e) => setType(e.target.value)}
-                aria-label="Property type"
-              >
-                <option value="">Property type</option>
-                {propertyTypes.map((t) => (
-                  <option key={t.value} value={t.value}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="field"
+                onChange={setType}
+                placeholder="Property type"
+                clearLabel="Sabhi types"
+                ariaLabel="Property type"
+                icon={GoHomeFill}
+                options={propertyTypes.map((t) => ({
+                  value: t.value,
+                  label: t.label,
+                  hint: t.labelHi,
+                  icon: t.icon,
+                }))}
+              />
+              <FancySelect
                 value={locality}
-                onChange={(e) => setLocality(e.target.value)}
-                aria-label="Locality"
-              >
-                <option value="">Locality (Indore)</option>
-                {localities.map((l) => (
-                  <option key={l} value={l}>
-                    {l}
-                  </option>
-                ))}
-              </select>
-              <select
-                className="field"
+                onChange={setLocality}
+                placeholder="Locality (Indore)"
+                clearLabel="Poora Indore"
+                ariaLabel="Locality"
+                icon={GoLocation}
+                options={localities.map((l) => ({ value: l, label: l }))}
+              />
+              <FancySelect
                 value={budget}
-                onChange={(e) => setBudget(e.target.value)}
-                aria-label="Budget"
-              >
-                <option value="">Max budget</option>
-                <option value="5000">Upto ₹5,000</option>
-                <option value="10000">Upto ₹10,000</option>
-                <option value="20000">Upto ₹20,000</option>
-                <option value="50000">Upto ₹50,000</option>
-              </select>
+                onChange={setBudget}
+                placeholder="Max budget"
+                clearLabel="Koi bhi budget"
+                ariaLabel="Budget"
+                icon={GoCreditCard}
+                options={budgetOptions}
+              />
               <button type="submit" className="btn-primary">
                 {hero.searchCta}
                 <GoSearch aria-hidden="true" className="h-4 w-4" />

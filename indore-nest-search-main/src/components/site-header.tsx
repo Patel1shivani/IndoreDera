@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
   GoListUnordered,
+  GoPerson,
   GoPlus,
   GoProject,
   GoSearch,
@@ -9,14 +10,6 @@ import {
   GoX,
 } from "react-icons/go";
 import { useState } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
 import { useSiteData } from "@/lib/site-data";
 import logo from "../assets/logo.png";
@@ -126,35 +119,20 @@ export function SiteHeader() {
           </Link>
 
           {/* hydration ke pehle kuch na dikhayein, warna SSR mismatch hota hai */}
+          {/* Avatar par click karte hi profile page khulta hai — dropdown ki zaroorat nahi,
+              logout aur baaki actions wahin page par hain */}
           {ready && user && (
-            <DropdownMenu>
-              <DropdownMenuTrigger className="flex items-center gap-2 rounded-full p-0.5 pr-2 outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-                  {initials}
-                </span>
-                <span className="hidden text-sm font-medium lg:inline">{firstName}</span>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <span className="block">{user.name}</span>
-                  <span className="block text-xs font-normal text-muted-foreground">
-                    {user.email}
-                  </span>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link to="/dashboard" className="cursor-pointer">
-                    <GoProject className="mr-2 h-4 w-4" />
-                    Meri listings
-                  </Link>
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                  <GoSignOut className="mr-2 h-4 w-4" />
-                  Logout
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <Link
+              to="/profile"
+              aria-label="Meri profile"
+              title={user.name}
+              className="flex items-center gap-2 rounded-full p-0.5 pr-2 outline-none transition-colors hover:bg-secondary focus-visible:ring-2 focus-visible:ring-ring [&.active>span:first-child]:ring-2 [&.active>span:first-child]:ring-primary/40"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground ring-offset-2 ring-offset-background">
+                {initials}
+              </span>
+              <span className="hidden text-sm font-medium lg:inline">{firstName}</span>
+            </Link>
           )}
 
           <button
@@ -205,6 +183,14 @@ export function SiteHeader() {
                 <>
                   <p className="px-3 text-sm font-semibold">{user.name}</p>
                   <p className="px-3 text-xs text-muted-foreground">{user.email}</p>
+                  <Link
+                    to="/profile"
+                    onClick={() => setOpen(false)}
+                    className="mt-2 flex items-center rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/80 hover:bg-secondary"
+                  >
+                    <GoPerson className="mr-2 h-4 w-4" />
+                    Meri profile
+                  </Link>
                   <Link
                     to="/dashboard"
                     onClick={() => setOpen(false)}

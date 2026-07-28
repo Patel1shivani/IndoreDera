@@ -81,7 +81,8 @@ async function writeState(state) {
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: "5mb" }));
+// listing photos base64 data-URL me aati hain, isliye limit udaar rakhi hai
+app.use(express.json({ limit: "50mb" }));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 

@@ -9,9 +9,12 @@ import {
   GoStack,
   GoTag,
   GoUpload,
+  GoX,
 } from "react-icons/go";
+import { toast } from "sonner";
 import { LoginGate } from "@/components/login-gate";
 import { canPostListing, FREE_LISTINGS_PER_OWNER, useAuth } from "@/lib/auth";
+import { fileToDataUrl, ImageUploadError, MAX_PHOTOS, MIN_PHOTOS } from "@/lib/image-upload";
 import { sendMail } from "@/lib/mailer";
 import { localities, propertyTypes, type Property, type PropertyType } from "@/lib/properties";
 import { useSiteData } from "@/lib/site-data";
@@ -48,7 +51,7 @@ const emptyForm = {
   preferred: "",
   amenities: "",
   description: "",
-  image: "",
+  images: [] as string[],
 };
 
 const fallbackImage =
@@ -61,6 +64,8 @@ function ListProperty() {
   const [form, setForm] = useState(emptyForm);
   const [submitted, setSubmitted] = useState<"pending" | "draft" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
 
   const myListings = data.listings.filter((p) => p.ownerId && p.ownerId === user?.id);
   const gate = canPostListing(user ?? null, myListings.length);
@@ -68,6 +73,51 @@ function ListProperty() {
   function set<K extends keyof typeof form>(key: K) {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
+  }
+
+  /* Photos: gallery se files chunein ya link paste karein — dono ek hi list me
+     jaate hain. Pehli photo cover banti hai. */
+  function addPhotos(next: string[]) {
+    setForm((f) => {
+      const merged = [...f.images, ...next.filter((src) => !f.images.includes(src))];
+      if (merged.length > MAX_PHOTOS) {
+        toast.warning(`Zyada se zyada ${MAX_PHOTOS} photos add ho sakti hain`);
+      }
+      return { ...f, images: merged.slice(0, MAX_PHOTOS) };
+    });
+  }
+
+  async function handleFiles(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    e.target.value = ""; // same file dobara chunne par bhi change fire ho
+    if (!files.length) return;
+
+    setUploading(true);
+    const done: string[] = [];
+    for (const file of files) {
+      try {
+        done.push(await fileToDataUrl(file));
+      } catch (err) {
+        toast.error(err instanceof ImageUploadError ? err.message : `${file.name} add nahi hui`);
+      }
+    }
+    if (done.length) addPhotos(done);
+    setUploading(false);
+  }
+
+  function addPhotoUrl() {
+    const url = photoUrl.trim();
+    if (!url) return;
+    if (!/^https?:\/\//i.test(url)) {
+      toast.error("Link http:// ya https:// se shuru hona chahiye");
+      return;
+    }
+    addPhotos([url]);
+    setPhotoUrl("");
+  }
+
+  function removePhoto(src: string) {
+    setForm((f) => ({ ...f, images: f.images.filter((s) => s !== src) }));
   }
 
   function buildListing(status: "pending" | "draft"): Property {
@@ -84,7 +134,8 @@ function ListProperty() {
       bhk: form.bhk || undefined,
       furnishing: form.furnishing,
       preferred: form.preferred.trim() || "Anyone",
-      image: form.image.trim() || fallbackImage,
+      image: form.images[0] || fallbackImage,
+      images: form.images.length ? form.images : undefined,
       amenities: form.amenities
         .split(",")
         .map((a) => a.trim())
@@ -101,6 +152,11 @@ function ListProperty() {
 
   async function submit(status: "pending" | "draft") {
     if (!user) return;
+    // draft me kam photos chalti hain, par live listing ke liye poori gallery chahiye
+    if (status === "pending" && form.images.length < MIN_PHOTOS) {
+      toast.error(`Kam se kam ${MIN_PHOTOS} photos add karein (abhi ${form.images.length} hain)`);
+      return;
+    }
     setBusy(true);
 
     const listing = buildListing(status);
@@ -334,20 +390,90 @@ function ListProperty() {
             onChange={set("preferred")}
           />
         </Field>
-        <Field label="Photo URL" htmlFor="image" full>
-          <div className="relative">
-            <GoUpload
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              id="image"
-              type="url"
-              className="field pl-11"
-              placeholder="https://... (khaali chhodenge to default photo lag jayegi)"
-              value={form.image}
-              onChange={set("image")}
-            />
+        <Field label={`Photos (kam se kam ${MIN_PHOTOS})`} htmlFor="photo-files" full>
+          <div className="rounded-2xl border border-dashed border-input bg-secondary/30 p-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <label
+                htmlFor="photo-files"
+                className="btn-outline cursor-pointer bg-card aria-disabled:opacity-60"
+                aria-disabled={uploading || form.images.length >= MAX_PHOTOS}
+              >
+                <GoUpload aria-hidden="true" className="h-4 w-4" />
+                {uploading ? "Photos process ho rahi hain..." : "Phone/PC se photos chunein"}
+              </label>
+              <input
+                id="photo-files"
+                type="file"
+                accept="image/*"
+                multiple
+                className="sr-only"
+                disabled={uploading || form.images.length >= MAX_PHOTOS}
+                onChange={(e) => void handleFiles(e)}
+              />
+              <span className="text-sm text-muted-foreground">ya</span>
+              <div className="flex min-w-[15rem] flex-1 gap-2">
+                <input
+                  type="url"
+                  aria-label="Photo ka link"
+                  className="field bg-card"
+                  placeholder="https://... link paste karein"
+                  value={photoUrl}
+                  onChange={(e) => setPhotoUrl(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addPhotoUrl();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  className="btn-outline shrink-0 bg-card"
+                  onClick={addPhotoUrl}
+                >
+                  <GoPlus aria-hidden="true" className="h-4 w-4" />
+                  Add
+                </button>
+              </div>
+            </div>
+
+            <p
+              className={`mt-3 text-sm ${
+                form.images.length >= MIN_PHOTOS ? "text-brand-green" : "text-muted-foreground"
+              }`}
+            >
+              {form.images.length}/{MIN_PHOTOS} photos
+              {form.images.length >= MIN_PHOTOS
+                ? " — badhiya! Pehli photo cover banegi."
+                : ` — aur ${MIN_PHOTOS - form.images.length} photo add karein (max ${MAX_PHOTOS}).`}
+            </p>
+
+            {form.images.length > 0 && (
+              <ul className="mt-3 grid grid-cols-3 gap-3 sm:grid-cols-5">
+                {form.images.map((src, i) => (
+                  <li key={src.slice(0, 64)} className="group relative">
+                    <img
+                      src={src}
+                      alt={`Photo ${i + 1}`}
+                      className="aspect-square w-full rounded-xl border border-border object-cover"
+                    />
+                    {i === 0 && (
+                      <span className="badge-accent absolute left-1.5 top-1.5 !px-2 !py-0.5 !text-[10px]">
+                        Cover
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      aria-label={`Photo ${i + 1} hataayein`}
+                      onClick={() => removePhoto(src)}
+                      className="absolute right-1.5 top-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-foreground/70 text-background transition hover:bg-destructive"
+                    >
+                      <GoX aria-hidden="true" className="h-3.5 w-3.5" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </Field>
         <Field label="Amenities (comma se alag karein)" htmlFor="amenities" full>

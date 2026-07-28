@@ -1,5 +1,14 @@
 import { Link } from "@tanstack/react-router";
-import { GoDeviceMobile, GoInfo, GoLocation, GoMail, GoPlus, GoSearch } from "react-icons/go";
+import {
+  GoDeviceMobile,
+  GoInfo,
+  GoLaw,
+  GoLocation,
+  GoMail,
+  GoPlus,
+  GoSearch,
+  GoShieldCheck,
+} from "react-icons/go";
 import logo from "../assets/logo.png";
 import { propertyTypes } from "@/lib/properties";
 
@@ -9,6 +18,12 @@ const companyLinks = [
   { to: "/contact", label: "Contact", icon: GoMail },
   { to: "/list-property", label: "List Your Property", icon: GoPlus },
   { to: "/properties", label: "Browse Rentals", icon: GoSearch },
+] as const;
+
+/* Legal column — policy pages. */
+const legalLinks = [
+  { to: "/privacy", label: "Privacy Policy", icon: GoShieldCheck },
+  { to: "/terms", label: "Terms & Conditions", icon: GoLaw },
 ] as const;
 
 export function SiteFooter() {
@@ -60,21 +75,33 @@ export function SiteFooter() {
             </li>
             <li className="flex items-center gap-2">
               <GoDeviceMobile aria-hidden="true" className="h-4 w-4 shrink-0" />
-              <a href="tel:+919826000000" className="hover:text-accent">
-                +91 98260 00000
+              <a href="tel:+918962504009" className="hover:text-accent">
+                +91 8962504009
               </a>
             </li>
             <li className="flex items-center gap-2">
               <GoMail aria-hidden="true" className="h-4 w-4 shrink-0" />
-              <a href="mailto:hello@indoredera.in" className="hover:text-accent">
-                hello@indoredera.in
+              <a href="mailto:shivimukati74@gmail.com" className="hover:text-accent">
+                shivimukati74@gmail.com
               </a>
             </li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-primary-foreground/15 py-4 text-center text-xs text-primary-foreground/70">
-        © {new Date().getFullYear()} Indore Dera · अपना घर, अपना शहर
+      <div className="border-t border-primary-foreground/15">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 text-xs text-primary-foreground/70 sm:flex-row sm:justify-between">
+          <p>© {new Date().getFullYear()} Indore Dera · अपना घर, अपना शहर</p>
+          <ul className="flex items-center gap-4">
+            {legalLinks.map((l) => (
+              <li key={l.to}>
+                <Link to={l.to} className="flex items-center gap-1.5 hover:text-accent">
+                  <l.icon aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+                  {l.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
     </footer>
   );

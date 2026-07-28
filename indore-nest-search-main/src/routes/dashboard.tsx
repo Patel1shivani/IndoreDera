@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import {
+  GoCheck,
   GoChecklist,
   GoClock,
   GoCreditCard,
@@ -11,11 +13,21 @@ import {
   GoStack,
   GoTrash,
   GoVerified,
+  GoX,
 } from "react-icons/go";
 import type { IconType } from "react-icons";
+import { ImageCarousel } from "@/components/image-carousel";
 import { LoginGate } from "@/components/login-gate";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { canPostListing, FREE_LISTINGS_PER_OWNER, isPlanActive, useAuth } from "@/lib/auth";
-import { formatRent } from "@/lib/properties";
+import { formatRent, propertyImages, propertyTypes, type Property } from "@/lib/properties";
 import { useSiteData } from "@/lib/site-data";
 
 export const Route = createFileRoute("/dashboard")({
@@ -34,6 +46,7 @@ export const Route = createFileRoute("/dashboard")({
 function Dashboard() {
   const { user, ready } = useAuth();
   const { data, removeListing } = useSiteData();
+  const [preview, setPreview] = useState<Property | null>(null);
 
   if (!ready) {
     return (
@@ -129,16 +142,12 @@ function Dashboard() {
               </div>
               <StatusBadge status={p.status ?? "approved"} />
               <div className="flex gap-2">
-                {p.status === "approved" && (
-                  <Link
-                    to="/properties/$propertyId"
-                    params={{ propertyId: p.id }}
-                    className="btn-outline"
-                  >
-                    <GoEye aria-hidden="true" className="h-4 w-4" />
-                    Dekhein
-                  </Link>
-                )}
+                {/* Dekhein har status par chalta hai — draft/pending ka public page
+                    nahi hota, isliye poori detail modal me dikhati hai */}
+                <button type="button" className="btn-outline" onClick={() => setPreview(p)}>
+                  <GoEye aria-hidden="true" className="h-4 w-4" />
+                  Dekhein
+                </button>
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
@@ -152,6 +161,131 @@ function Dashboard() {
           ))}
         </div>
       )}
+
+      <ListingPreview listing={preview} onClose={() => setPreview(null)} />
+    </div>
+  );
+}
+
+/** "Dekhein" par khulne wala modal — listing ki poori detail, photos samet. */
+function ListingPreview({ listing, onClose }: { listing: Property | null; onClose: () => void }) {
+  const type = listing ? propertyTypes.find((t) => t.value === listing.type) : undefined;
+
+  return (
+    <Dialog open={!!listing} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-3xl">
+        {listing && (
+          <>
+            <DialogHeader>
+              <DialogTitle className="font-display text-2xl leading-snug tracking-wide">
+                {listing.title}
+              </DialogTitle>
+              <DialogDescription className="flex items-center gap-1.5">
+                <GoLocation aria-hidden="true" className="h-4 w-4 shrink-0" />
+                {listing.locality}
+                {listing.road ? `, ${listing.road}` : ""} · Indore
+              </DialogDescription>
+            </DialogHeader>
+
+            <ImageCarousel
+              images={propertyImages(listing)}
+              alt={listing.title}
+              imageClassName="h-56 sm:h-72"
+            />
+
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={listing.status ?? "approved"} />
+              {type && (
+                <span className="badge-accent">
+                  <type.icon aria-hidden="true" className="h-3.5 w-3.5" />
+                  {type.label}
+                </span>
+              )}
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-medium text-secondary-foreground">
+                {listing.furnishing}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[
+                { k: "Rent", v: `${formatRent(listing.rent)}/mo` },
+                { k: "Deposit", v: formatRent(listing.deposit) },
+                { k: "Area", v: listing.area || "—" },
+                { k: "Config", v: listing.bhk ?? type?.label ?? "—" },
+              ].map((s) => (
+                <div
+                  key={s.k}
+                  className="rounded-xl border border-border bg-background p-3 text-center"
+                >
+                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{s.k}</p>
+                  <p className="mt-0.5 font-display text-base">{s.v}</p>
+                </div>
+              ))}
+            </div>
+
+            {listing.description && (
+              <p className="text-sm leading-relaxed text-muted-foreground">{listing.description}</p>
+            )}
+
+            {listing.amenities.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold">Amenities</h3>
+                <ul className="mt-2 flex flex-wrap gap-2">
+                  {listing.amenities.map((a) => (
+                    <li
+                      key={a}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground"
+                    >
+                      <GoCheck aria-hidden="true" className="h-3.5 w-3.5 text-brand-green" />
+                      {a}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <dl className="grid gap-2 rounded-2xl bg-secondary/50 p-4 text-sm sm:grid-cols-2">
+              <Row label="Preferred tenant" value={listing.preferred} />
+              <Row label="Owner" value={listing.ownerName} />
+              {listing.ownerPhone && <Row label="Contact" value={`+91 ${listing.ownerPhone}`} />}
+              <Row
+                label="Posted"
+                value={
+                  listing.createdAt
+                    ? new Date(listing.createdAt).toLocaleDateString("en-IN")
+                    : listing.postedAgo
+                }
+              />
+            </dl>
+
+            <DialogFooter>
+              {listing.status === "approved" && (
+                <Link
+                  to="/properties/$propertyId"
+                  params={{ propertyId: listing.id }}
+                  className="btn-primary"
+                >
+                  <GoEye aria-hidden="true" className="h-4 w-4" />
+                  Public page par dekhein
+                </Link>
+              )}
+              <button type="button" className="btn-outline" onClick={onClose}>
+                <GoX aria-hidden="true" className="h-4 w-4" />
+                Band karein
+              </button>
+            </DialogFooter>
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-between gap-3 sm:block">
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className="font-medium">{value}</dd>
     </div>
   );
 }

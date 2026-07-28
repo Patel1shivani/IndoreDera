@@ -16,8 +16,11 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ListPropertyRouteImport } from './routes/list-property'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as PlansRouteImport } from './routes/plans'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PropertiesIndexRouteImport } from './routes/properties/index'
 import { Route as PropertiesPropertyIdRouteImport } from './routes/properties/$propertyId'
 
@@ -56,6 +59,16 @@ const PlansRoute = PlansRouteImport.update({
   path: '/plans',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RegisterRoute = RegisterRouteImport.update({
   id: '/register',
   path: '/register',
@@ -64,6 +77,11 @@ const RegisterRoute = RegisterRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PropertiesIndexRoute = PropertiesIndexRouteImport.update({
@@ -85,8 +103,11 @@ export interface FileRoutesByFullPath {
   '/list-property': typeof ListPropertyRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/properties/$propertyId': typeof PropertiesPropertyIdRoute
   '/properties/': typeof PropertiesIndexRoute
 }
@@ -98,8 +119,11 @@ export interface FileRoutesByTo {
   '/list-property': typeof ListPropertyRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/properties/$propertyId': typeof PropertiesPropertyIdRoute
   '/properties': typeof PropertiesIndexRoute
 }
@@ -112,8 +136,11 @@ export interface FileRoutesById {
   '/list-property': typeof ListPropertyRoute
   '/login': typeof LoginRoute
   '/plans': typeof PlansRoute
+  '/privacy': typeof PrivacyRoute
+  '/profile': typeof ProfileRoute
   '/register': typeof RegisterRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/properties/$propertyId': typeof PropertiesPropertyIdRoute
   '/properties/': typeof PropertiesIndexRoute
 }
@@ -127,8 +154,11 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/login'
     | '/plans'
+    | '/privacy'
+    | '/profile'
     | '/register'
     | '/sitemap.xml'
+    | '/terms'
     | '/properties/$propertyId'
     | '/properties/'
   fileRoutesByTo: FileRoutesByTo
@@ -140,8 +170,11 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/login'
     | '/plans'
+    | '/privacy'
+    | '/profile'
     | '/register'
     | '/sitemap.xml'
+    | '/terms'
     | '/properties/$propertyId'
     | '/properties'
   id:
@@ -153,8 +186,11 @@ export interface FileRouteTypes {
     | '/list-property'
     | '/login'
     | '/plans'
+    | '/privacy'
+    | '/profile'
     | '/register'
     | '/sitemap.xml'
+    | '/terms'
     | '/properties/$propertyId'
     | '/properties/'
   fileRoutesById: FileRoutesById
@@ -167,8 +203,11 @@ export interface RootRouteChildren {
   ListPropertyRoute: typeof ListPropertyRoute
   LoginRoute: typeof LoginRoute
   PlansRoute: typeof PlansRoute
+  PrivacyRoute: typeof PrivacyRoute
+  ProfileRoute: typeof ProfileRoute
   RegisterRoute: typeof RegisterRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   PropertiesPropertyIdRoute: typeof PropertiesPropertyIdRoute
   PropertiesIndexRoute: typeof PropertiesIndexRoute
 }
@@ -224,6 +263,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PlansRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/register': {
       id: '/register'
       path: '/register'
@@ -236,6 +289,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/properties/': {
@@ -263,8 +323,11 @@ const rootRouteChildren: RootRouteChildren = {
   ListPropertyRoute: ListPropertyRoute,
   LoginRoute: LoginRoute,
   PlansRoute: PlansRoute,
+  PrivacyRoute: PrivacyRoute,
+  ProfileRoute: ProfileRoute,
   RegisterRoute: RegisterRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   PropertiesPropertyIdRoute: PropertiesPropertyIdRoute,
   PropertiesIndexRoute: PropertiesIndexRoute,
 }
