@@ -1,0 +1,15 @@
+{
+  "name": "indoredera-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared data server so the site (8080) and admin panel (5174) see the same data.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}

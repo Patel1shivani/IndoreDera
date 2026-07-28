@@ -1,0 +1,404 @@
+{
+  "siteData": {
+    "hero": {
+      "logoText": "Indore Dera",
+      "logoTagline": "अपना घर, अपना शहर",
+      "badge": "Indore ka apna rental platform",
+      "titleStart": "Indore me",
+      "titleHighlight": "kiraye ka ghar",
+      "titleEnd": "dhundhna ab aasaan",
+      "subtitle": "Flat, room, dukaan, PG ya zameen — sab kuch ek jagah. Bina broker ke, seedha owner se baat karein.",
+      "searchCta": "Search ",
+      "ownerCta": "Owner hoon — property list karni hai",
+      "lockedTitle": "Properties dekhne ke liye login zaroori hai",
+      "lockedSubtitle": "Free account banayein aur Indore ki saari verified listings, rent, photos aur owner ka number turant dekhein."
+    },
+    "banners": [
+      {
+        "id": "b-guest-1",
+        "audience": "guest",
+        "title": "Zero brokerage, 100% Indore",
+        "subtitle": "Account banayein aur 500+ verified listings unlock karein.",
+        "image": "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1400&q=70",
+        "ctaLabel": "Free account banayein",
+        "active": true
+      },
+      {
+        "id": "b-user-1",
+        "audience": "user",
+        "title": "Naye flats roz add ho rahe hain",
+        "subtitle": "Vijay Nagar, Nipania aur Super Corridor me fresh listings dekhein.",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1400&q=70",
+        "ctaLabel": "Browse karein",
+        "active": true
+      },
+      {
+        "id": "b-user-2",
+        "audience": "user",
+        "title": "PG dhoondh rahe hain?",
+        "subtitle": "Bhawarkuan aur Annapurna ke student-friendly PG, meals ke saath.",
+        "image": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1400&q=70",
+        "ctaLabel": "PG dekhein",
+        "active": true
+      },
+      {
+        "id": "b-owner-1",
+        "audience": "owner",
+        "title": "Pehli listing bilkul free",
+        "subtitle": "Apni property post karein — hazaaron Indore tenants tak pahunchein.",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=70",
+        "ctaLabel": "Property list karein",
+        "active": true
+      }
+    ],
+    "testimonials": [
+      {
+        "name": "Test",
+        "locality": "Vijay Nagar",
+        "rating": 5,
+        "message": "Badhiya platform",
+        "id": "64d1474b-8aaf-4dc4-bb31-28f301b7dbc9",
+        "status": "pending",
+        "createdAt": 1785221513064
+      },
+      {
+        "name": "Test",
+        "locality": "Vijay Nagar",
+        "rating": 5,
+        "message": "Badhiya",
+        "id": "ef0560af-313c-494d-91b3-d435b76c740e",
+        "status": "pending",
+        "createdAt": 1785221402745
+      },
+      {
+        "name": "Test User",
+        "locality": "Vijay Nagar",
+        "rating": 3,
+        "message": "Bahut badhiya platform hai",
+        "id": "12a79b1e-dd47-4ff7-b0dd-e0b4b5316dbb",
+        "status": "pending",
+        "createdAt": 1785220032198
+      },
+      {
+        "id": "t-1",
+        "name": "Pooja Sharma",
+        "locality": "Vijay Nagar",
+        "rating": 5,
+        "message": "Do din me 2 BHK mil gaya, wo bhi bina kisi broker ke. Owner se seedha baat hui aur rent bhi kam mila.",
+        "status": "approved",
+        "createdAt": 0
+      },
+      {
+        "id": "t-2",
+        "name": "Imran Khan",
+        "locality": "Rajwada",
+        "rating": 4,
+        "message": "Apni dukaan yahan list ki thi, ek hafte me kirayedaar mil gaya. Listing free thi.",
+        "status": "approved",
+        "createdAt": 0
+      },
+      {
+        "id": "t-3",
+        "name": "Anjali Verma",
+        "locality": "Bhawarkuan",
+        "rating": 5,
+        "message": "Girls PG dhoondhna Indore me mushkil tha. Yahan photos aur meals ki detail mil gayi.",
+        "status": "approved",
+        "createdAt": 0
+      }
+    ],
+    "listings": [
+      {
+        "id": "vn-2bhk-01",
+        "title": "2 BHK Semi-Furnished Flat near Scheme 54",
+        "titleHi": "विजय नगर में 2 BHK फ्लैट",
+        "type": "flat",
+        "locality": "Vijay Nagar",
+        "rent": 14500,
+        "deposit": 30000,
+        "area": "1050 sq.ft.",
+        "bhk": "2 BHK",
+        "furnishing": "Semi-Furnished",
+        "preferred": "Family / Working Couple",
+        "image": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1000&q=70",
+        "featured": true,
+        "amenities": [
+          "Lift",
+          "Car Parking",
+          "24x7 Water",
+          "Power Backup"
+        ],
+        "description": "Bright 2 BHK on the 3rd floor with modular kitchen, balcony facing the park and walking distance from C21 Mall. Ideal for families and working couples.",
+        "ownerName": "Rakesh Patidar",
+        "postedAgo": "2 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "pal-shop-02",
+        "title": "Ground Floor Shop on Palasia Main Road",
+        "titleHi": "पलासिया मेन रोड पर दुकान",
+        "type": "shop",
+        "locality": "Palasia",
+        "rent": 38000,
+        "deposit": 150000,
+        "area": "420 sq.ft.",
+        "furnishing": "Unfurnished",
+        "preferred": "Retail / Cafe",
+        "image": "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1000&q=70",
+        "featured": true,
+        "amenities": [
+          "Main Road Facing",
+          "Shutter",
+          "Washroom",
+          "High Footfall"
+        ],
+        "description": "Prime retail space right on Palasia main road with excellent visibility. Suitable for showroom, cafe or clinic.",
+        "ownerName": "Suresh Jain",
+        "postedAgo": "5 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "bkn-pg-03",
+        "title": "Boys PG with Meals near Bhawarkuan Square",
+        "titleHi": "भंवरकुआं में बॉयज़ पीजी",
+        "type": "pg",
+        "locality": "Bhawarkuan",
+        "rent": 6500,
+        "deposit": 6500,
+        "area": "Sharing / Single",
+        "furnishing": "Furnished",
+        "preferred": "Students",
+        "image": "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1000&q=70",
+        "featured": true,
+        "amenities": [
+          "3 Time Meals",
+          "WiFi",
+          "Laundry",
+          "Study Table"
+        ],
+        "description": "Student-friendly PG minutes away from DAVV and coaching hubs. Home-style food, RO water and daily housekeeping included.",
+        "ownerName": "Anita Sharma",
+        "postedAgo": "1 hafta pehle",
+        "status": "approved"
+      },
+      {
+        "id": "nip-3bhk-04",
+        "title": "Spacious 3 BHK in Gated Society, Nipania",
+        "titleHi": "निपानिया में 3 BHK",
+        "type": "flat",
+        "locality": "Nipania",
+        "rent": 22000,
+        "deposit": 50000,
+        "area": "1450 sq.ft.",
+        "bhk": "3 BHK",
+        "furnishing": "Furnished",
+        "preferred": "Family",
+        "image": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "Clubhouse",
+          "Gym",
+          "Kids Play Area",
+          "Security"
+        ],
+        "description": "Fully furnished 3 BHK in a premium gated township with clubhouse, gym and 24x7 security.",
+        "ownerName": "Deepak Verma",
+        "postedAgo": "3 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "sud-room-05",
+        "title": "Independent Room with Attached Bathroom",
+        "titleHi": "सुदामा नगर में सिंगल रूम",
+        "type": "room",
+        "locality": "Sudama Nagar",
+        "rent": 4500,
+        "deposit": 9000,
+        "area": "180 sq.ft.",
+        "furnishing": "Semi-Furnished",
+        "preferred": "Bachelors",
+        "image": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "Attached Bathroom",
+          "Separate Entry",
+          "Water Tank"
+        ],
+        "description": "Independent room on the first floor with separate entry, perfect for bachelors working nearby.",
+        "ownerName": "Mahesh Yadav",
+        "postedAgo": "4 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "rau-land-06",
+        "title": "Commercial Plot on Rau-Pithampur Road",
+        "titleHi": "राऊ में कमर्शियल प्लॉट",
+        "type": "land",
+        "locality": "Rau",
+        "rent": 45000,
+        "deposit": 200000,
+        "area": "5000 sq.ft.",
+        "furnishing": "Unfurnished",
+        "preferred": "Warehouse / Godown",
+        "image": "https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "Boundary Wall",
+          "Road Access",
+          "Electricity"
+        ],
+        "description": "Open plot with boundary wall on the busy Rau-Pithampur road. Great for godown, yard or event space.",
+        "ownerName": "Ramesh Chouhan",
+        "postedAgo": "1 hafta pehle",
+        "status": "approved"
+      },
+      {
+        "id": "sch78-1bhk-07",
+        "title": "Cosy 1 BHK near Scheme No. 78 Garden",
+        "titleHi": "स्कीम 78 में 1 BHK",
+        "type": "flat",
+        "locality": "Scheme No. 78",
+        "rent": 9000,
+        "deposit": 18000,
+        "area": "600 sq.ft.",
+        "bhk": "1 BHK",
+        "furnishing": "Semi-Furnished",
+        "preferred": "Couple / Bachelors",
+        "image": "https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "Balcony",
+          "Two Wheeler Parking",
+          "Borewell"
+        ],
+        "description": "Neat 1 BHK with balcony overlooking the garden. Quiet colony with easy access to Bypass road.",
+        "ownerName": "Neha Gupta",
+        "postedAgo": "6 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "raj-shop-08",
+        "title": "Compact Shop in Rajwada Market",
+        "titleHi": "राजवाड़ा मार्केट में दुकान",
+        "type": "shop",
+        "locality": "Rajwada",
+        "rent": 18000,
+        "deposit": 60000,
+        "area": "200 sq.ft.",
+        "furnishing": "Unfurnished",
+        "preferred": "Retail",
+        "image": "https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "Heavy Footfall",
+          "Shutter",
+          "Loading Space"
+        ],
+        "description": "Small but high-traffic shop in the heart of the old city market — best for garments or accessories.",
+        "ownerName": "Imran Khan",
+        "postedAgo": "9 din pehle",
+        "status": "approved"
+      },
+      {
+        "id": "ann-pg-09",
+        "title": "Girls PG with AC Rooms, Annapurna",
+        "titleHi": "अन्नपूर्णा में गर्ल्स पीजी",
+        "type": "pg",
+        "locality": "Annapurna",
+        "rent": 7800,
+        "deposit": 8000,
+        "area": "Double Sharing",
+        "furnishing": "Furnished",
+        "preferred": "Working Women / Students",
+        "image": "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&w=1000&q=70",
+        "amenities": [
+          "AC Rooms",
+          "CCTV",
+          "Meals",
+          "Warden"
+        ],
+        "description": "Safe and secure girls PG with CCTV, warden, AC rooms and hygienic homely meals.",
+        "ownerName": "Sunita Rao",
+        "postedAgo": "2 din pehle",
+        "status": "approved"
+      }
+    ],
+    "plans": [
+      {
+        "id": "one-time",
+        "label": "One-time listing",
+        "price": 99,
+        "period": "ek listing",
+        "credits": 1,
+        "durationDays": null,
+        "perks": [
+          "Ek extra property post karein",
+          "30 din tak live",
+          "Owner ka number visible"
+        ]
+      },
+      {
+        "id": "monthly",
+        "label": "Monthly",
+        "price": 299,
+        "period": "/ month",
+        "credits": null,
+        "durationDays": 30,
+        "perks": [
+          "Unlimited listings",
+          "Featured tag",
+          "Priority support"
+        ],
+        "highlight": true
+      },
+      {
+        "id": "yearly",
+        "label": "Yearly",
+        "price": 1999,
+        "period": "/ year",
+        "credits": null,
+        "durationDays": 365,
+        "perks": [
+          "Unlimited listings",
+          "Featured tag",
+          "2 mahine free",
+          "Priority support"
+        ]
+      }
+    ]
+  },
+  "users": [
+    {
+      "id": "d5ee925f-e955-45d8-8989-ad8ba4041d63",
+      "name": "Indore Dera Admin",
+      "phone": "9826000001",
+      "email": "admin@indoredera.in",
+      "role": "admin",
+      "plan": null,
+      "passwordHash": "34eef00628c03dd87cf4cb5f981471157a67ea82a0cfa5c9853235fb97de9ad3"
+    },
+    {
+      "id": "cccb757b-7b99-4533-a5f4-00e1d6f59769",
+      "name": "Rama Russo",
+      "phone": "4449089511",
+      "email": "gufyhy@mailinator.com",
+      "role": "tenant",
+      "plan": null,
+      "passwordHash": "c1e79104fa74f595ea896e24cabbc37ba0c524c762e11bd6de50868e2d380b67"
+    },
+    {
+      "id": "5f8dd707-f99a-4e7b-a31d-f39a31582f27",
+      "name": "Vikram Solanki",
+      "phone": "9826055555",
+      "email": "vikram@indoredera.in",
+      "role": "owner",
+      "plan": null,
+      "passwordHash": "8f5b51f29974f5661977be05d3bee834d31b6fd4659bbbac6e453373d243e144"
+    },
+    {
+      "id": "9d72e12a-3223-4f34-84f1-c7e79a490fee",
+      "name": "Test Kumar",
+      "phone": "9826000123",
+      "email": "test29619@mailinator.com",
+      "role": "tenant",
+      "plan": null,
+      "passwordHash": "16eab4694010a9143a4724bad337e06a290e6ac8a9bea286ff97b006ab11d173"
+    }
+  ],
+  "updatedAt": 1785222382851
+}

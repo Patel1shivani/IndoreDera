@@ -1,0 +1,145 @@
+@import "tailwindcss";
+
+/*
+ * Indore Dera Admin — theme.
+ *
+ * Colors logo se aaye hain: banner ka gehra laal, ribbon ka hara, sunset ka
+ * kesari aur mahal ka cream. Website ke palette se hi match karte hain, bas
+ * yahan surfaces thodi thandi/flat hain taaki tables aur forms saaf padhein.
+ */
+
+@theme {
+  /* text */
+  --color-ink: oklch(0.24 0.03 40); /* website ka foreground */
+  --color-ink-soft: oklch(0.48 0.03 45);
+
+  /* surfaces — website jaisa warm cream */
+  --color-surface: oklch(0.975 0.012 82);
+  --color-panel: oklch(1 0 0);
+  --color-line: oklch(0.9 0.02 76);
+
+  /* sidebar — logo ke laal se rang liya hai par kaafi gehra, taaki halka text
+     saaf padhe. Pehle ye zyada halka tha aur inactive items dikhte hi nahi the. */
+  --color-sidebar: oklch(0.19 0.035 30);
+  --color-sidebar-soft: oklch(0.84 0.025 70);
+
+  /* brand — wahi laal jo website par hai */
+  --color-brand: oklch(0.5 0.185 27);
+  --color-brand-soft: oklch(0.955 0.03 30);
+
+  /* logo ka hara ribbon */
+  --color-ok: oklch(0.52 0.13 148);
+  --color-ok-soft: oklch(0.95 0.045 148);
+
+  /* logo ka kesari sunset */
+  --color-warn: oklch(0.79 0.155 72);
+  --color-warn-soft: oklch(0.955 0.055 78);
+
+  --color-danger: oklch(0.55 0.2 27);
+
+  --font-sans: Mukta, "Segoe UI", system-ui, sans-serif;
+  --font-display: "Baloo 2", Mukta, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-surface);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* headings website jaisi display font me — dono screens ek brand lagein */
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+}
+
+@utility card {
+  border-radius: 0.875rem;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-panel);
+  box-shadow: 0 4px 14px -10px color-mix(in oklab, var(--color-ink) 55%, transparent);
+}
+
+@utility btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+  cursor: pointer;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@utility btn-primary {
+  background-color: var(--color-brand);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-brand) 88%, black);
+  }
+}
+
+@utility btn-ghost {
+  border: 1px solid var(--color-line);
+  background-color: var(--color-panel);
+  color: var(--color-ink);
+
+  &:hover:not(:disabled) {
+    background-color: var(--color-surface);
+    border-color: color-mix(in oklab, var(--color-brand) 35%, var(--color-line));
+  }
+}
+
+@utility btn-danger {
+  border: 1px solid color-mix(in oklab, var(--color-danger) 35%, transparent);
+  color: var(--color-danger);
+  background-color: transparent;
+
+  &:hover:not(:disabled) {
+    background-color: color-mix(in oklab, var(--color-danger) 8%, transparent);
+  }
+}
+
+@utility input {
+  width: 100%;
+  border-radius: 0.6rem;
+  border: 1px solid var(--color-line);
+  background-color: var(--color-panel);
+  padding: 0.5rem 0.7rem;
+  font-size: 0.875rem;
+  color: var(--color-ink);
+  outline: none;
+
+  &:focus {
+    border-color: var(--color-brand);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-brand) 16%, transparent);
+  }
+
+  &::placeholder {
+    color: color-mix(in oklab, var(--color-ink-soft) 70%, transparent);
+  }
+}
+
+@utility label {
+  display: block;
+  margin-bottom: 0.3rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+}

@@ -1,0 +1,512 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Indore Dera design system.
+ * Palette derived from the brand logo: deep rally red, palace saffron,
+ * banner green and warm cream paper.
+ */
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-brand-green: var(--brand-green);
+  --color-brand-green-foreground: var(--brand-green-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --font-display: "Baloo 2", "Mukta", system-ui, sans-serif;
+  --font-sans: "Mukta", system-ui, sans-serif;
+  --shadow-soft: 0 6px 20px -12px color-mix(in oklab, var(--foreground) 45%, transparent);
+  --shadow-lifted: 0 18px 40px -18px color-mix(in oklab, var(--primary) 45%, transparent);
+}
+
+:root {
+  --radius: 0.875rem;
+  --background: oklch(0.98 0.012 85);
+  --foreground: oklch(0.24 0.03 40);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.03 40);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.03 40);
+  --primary: oklch(0.5 0.185 27);
+  --primary-foreground: oklch(0.985 0.012 85);
+  --secondary: oklch(0.94 0.028 78);
+  --secondary-foreground: oklch(0.36 0.09 40);
+  --muted: oklch(0.95 0.018 80);
+  --muted-foreground: oklch(0.51 0.03 55);
+  --accent: oklch(0.79 0.155 72);
+  --accent-foreground: oklch(0.27 0.06 45);
+  --brand-green: oklch(0.52 0.13 148);
+  --brand-green-foreground: oklch(0.985 0.012 85);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0.012 85);
+  --border: oklch(0.9 0.022 76);
+  --input: oklch(0.9 0.022 76);
+  --ring: oklch(0.5 0.185 27);
+}
+
+@layer base {
+  * {
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-background);
+    color: var(--color-foreground);
+    font-family: var(--font-sans);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+  }
+}
+
+@utility btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-primary);
+  color: var(--color-primary-foreground);
+  padding: 0.6rem 1.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  box-shadow: var(--shadow-soft);
+  transition:
+    transform 0.2s ease,
+    background-color 0.2s ease;
+
+  &:hover {
+    background-color: color-mix(in oklab, var(--color-primary) 88%, black);
+    transform: translateY(-1px);
+  }
+}
+
+@utility btn-accent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+  padding: 0.6rem 1.35rem;
+  font-weight: 700;
+  font-size: 0.9rem;
+  transition:
+    transform 0.2s ease,
+    filter 0.2s ease;
+
+  &:hover {
+    filter: brightness(1.05);
+    transform: translateY(-1px);
+  }
+}
+
+@utility btn-outline {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background-color: var(--color-card);
+  color: var(--color-foreground);
+  padding: 0.6rem 1.35rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+
+  &:hover {
+    background-color: var(--color-secondary);
+  }
+}
+
+@utility badge-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-accent);
+  color: var(--color-accent-foreground);
+  padding: 0.2rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@utility badge-green {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 9999px;
+  background-color: var(--color-brand-green);
+  color: var(--color-brand-green-foreground);
+  padding: 0.2rem 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+@utility field {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid var(--color-input);
+  background-color: var(--color-card);
+  padding: 0.65rem 0.9rem;
+  font-size: 0.9rem;
+  color: var(--color-foreground);
+  outline: none;
+
+  &:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 18%, transparent);
+  }
+}
+
+@utility shadow-soft {
+  box-shadow: var(--shadow-soft);
+}
+
+@utility shadow-lifted {
+  box-shadow: var(--shadow-lifted);
+}
+
+@utility hero-surface {
+  background:
+    radial-gradient(
+      120% 90% at 50% 0%,
+      color-mix(in oklab, var(--color-accent) 45%, transparent) 0%,
+      transparent 60%
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-accent) 18%, var(--color-background)) 0%,
+      var(--color-background) 100%
+    );
+}
+
+/* ---------------------------------------------------------------------------
+ * Animations — intro splash aur page reveal.
+ * Sab kuch prefers-reduced-motion par apne aap band ho jaata hai (file ke ant me).
+ * ------------------------------------------------------------------------- */
+
+@keyframes star-drop {
+  0% {
+    transform: translateY(-115vh) rotate(-160deg) scale(0.4);
+    opacity: 0;
+  }
+  55% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(0) rotate(0deg) scale(1.12);
+  }
+  82% {
+    transform: translateY(-14%) rotate(6deg) scale(0.97);
+  }
+  92% {
+    transform: translateY(0) rotate(0deg) scale(1.04);
+  }
+  100% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes star-lift {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  25% {
+    transform: translateY(6%) scale(0.94);
+  }
+  100% {
+    transform: translateY(-120vh) rotate(140deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+@keyframes halo-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.18);
+    opacity: 0.15;
+  }
+}
+
+@keyframes rise-in {
+  from {
+    transform: translateY(18px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes drop-in {
+  from {
+    transform: translateY(-24px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes soft-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes sheen {
+  from {
+    background-position: -180% 0;
+  }
+  to {
+    background-position: 180% 0;
+  }
+}
+
+/* Star upar se girta hai, halke bounce ke saath ruk jaata hai */
+@utility animate-star-drop {
+  animation: star-drop 1.25s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+/* Click par star wapas upar uth jaata hai aur website shuru */
+@utility animate-star-lift {
+  animation: star-lift 0.75s cubic-bezier(0.6, 0, 0.75, 0.2) both;
+}
+
+@utility animate-halo {
+  animation: halo-pulse 2.4s ease-in-out infinite;
+}
+
+@utility animate-rise-in {
+  animation: rise-in 0.6s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+@utility animate-drop-in {
+  animation: drop-in 0.5s cubic-bezier(0.22, 0.8, 0.3, 1) both;
+}
+
+@utility animate-soft-float {
+  animation: soft-float 3.5s ease-in-out infinite;
+}
+
+/* Reveal ko thoda-thoda late chalane ke liye — cards par stagger banta hai */
+@utility delay-step-1 {
+  animation-delay: 90ms;
+}
+@utility delay-step-2 {
+  animation-delay: 180ms;
+}
+@utility delay-step-3 {
+  animation-delay: 270ms;
+}
+@utility delay-step-4 {
+  animation-delay: 360ms;
+}
+@utility delay-step-5 {
+  animation-delay: 450ms;
+}
+
+/* Card par hover — upar uthta hai aur border brand color le leta hai */
+@utility card-hover {
+  transition:
+    transform 0.28s cubic-bezier(0.22, 0.8, 0.3, 1),
+    box-shadow 0.28s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: color-mix(in oklab, var(--color-primary) 45%, transparent);
+    box-shadow: var(--shadow-lifted);
+  }
+}
+
+@utility text-sheen {
+  background: linear-gradient(
+    100deg,
+    var(--color-primary) 20%,
+    var(--color-accent) 45%,
+    var(--color-primary) 70%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: sheen 4.5s linear infinite;
+}
+
+/* ---------------------------------------------------------------------------
+ * Alerts (sonner) — Indore Dera theme.
+ * Poora box rangeen nahi hota; cream card rehta hai aur type ka rang sirf
+ * left patti + icon badge me aata hai. Selectors do-attribute wale hain taaki
+ * sonner ki apni runtime CSS ko beat kar sakein.
+ * ------------------------------------------------------------------------- */
+
+[data-sonner-toaster] {
+  --width: 23rem;
+}
+
+/* sonner apni CSS runtime par inject karta hai, isliye layout properties par
+   !important zaroori hai — warna uske defaults jeet jaate hain. */
+[data-sonner-toaster] [data-sonner-toast] {
+  position: relative;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 0.7rem !important;
+  overflow: hidden !important;
+  padding: 0.95rem 2.4rem 0.95rem 1.15rem !important;
+  border-radius: 1.15rem !important;
+  border: 1px solid var(--color-border) !important;
+  background: var(--color-card) !important;
+  color: var(--color-foreground) !important;
+  box-shadow: var(--shadow-lifted) !important;
+}
+
+/* left accent patti — type ke hisaab se rang */
+[data-sonner-toaster] [data-sonner-toast]::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: 0.28rem;
+  background: var(--color-primary);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"]::before {
+  background: var(--color-brand-green);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"]::before {
+  background: var(--color-destructive);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"]::before {
+  background: var(--color-accent);
+}
+
+/* icon round badge me baithta hai */
+[data-sonner-toaster] [data-sonner-toast] [data-icon] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  height: 1.9rem !important;
+  width: 1.9rem !important;
+  margin: 0.05rem 0 0 !important;
+  border-radius: 9999px;
+  background: var(--color-secondary);
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="success"] [data-icon] {
+  background: color-mix(in oklab, var(--color-brand-green) 16%, var(--color-card));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="error"] [data-icon] {
+  background: color-mix(in oklab, var(--color-destructive) 14%, var(--color-card));
+}
+
+[data-sonner-toaster] [data-sonner-toast][data-type="warning"] [data-icon] {
+  background: color-mix(in oklab, var(--color-accent) 30%, var(--color-card));
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-content] {
+  display: grid !important;
+  gap: 0.15rem !important;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-title] {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--color-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-description] {
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--color-muted-foreground);
+}
+
+/* close button left ki jagah upar-right me */
+[data-sonner-toaster] [data-sonner-toast] [data-close-button] {
+  top: 0.6rem !important;
+  right: 0.6rem !important;
+  bottom: auto !important;
+  left: auto !important;
+  transform: none !important;
+  height: 1.4rem !important;
+  width: 1.4rem !important;
+  border-radius: 9999px;
+  border: 1px solid var(--color-border);
+  background: var(--color-card);
+  color: var(--color-muted-foreground);
+  transition:
+    background-color 0.15s ease,
+    color 0.15s ease;
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-close-button]:hover {
+  background: var(--color-secondary);
+  color: var(--color-foreground);
+}
+
+[data-sonner-toaster] [data-sonner-toast] [data-button] {
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
