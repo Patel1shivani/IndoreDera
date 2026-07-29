@@ -309,6 +309,64 @@
   }
 }
 
+/* Hero ke peeche ghoomte rangeen dhabbe */
+@keyframes blob-drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(26px, -20px, 0) scale(1.09);
+  }
+  66% {
+    transform: translate3d(-20px, 16px, 0) scale(0.94);
+  }
+}
+
+/* Localities ki chalti hui patti */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Live badge ke charon taraf failta hua ring */
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--color-primary) 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 12px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+/* CTA ka gradient dheere-dheere aage-peeche khiskta hai */
+@keyframes gradient-pan {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes tilt-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-9px) rotate(1.5deg);
+  }
+}
+
 /* Star upar se girta hai, halke bounce ke saath ruk jaata hai */
 @utility animate-star-drop {
   animation: star-drop 1.25s cubic-bezier(0.22, 0.8, 0.3, 1) both;
@@ -350,6 +408,156 @@
 }
 @utility delay-step-5 {
   animation-delay: 450ms;
+}
+@utility delay-step-6 {
+  animation-delay: 540ms;
+}
+
+@utility animate-blob {
+  animation: blob-drift 18s ease-in-out infinite;
+}
+
+@utility animate-tilt-bob {
+  animation: tilt-bob 6s ease-in-out infinite;
+}
+
+@utility animate-pulse-ring {
+  animation: pulse-ring 2s ease-out infinite;
+}
+
+/* Do-baar duplicate kiye hue content par lagti hai — loop seamless dikhta hai */
+@utility marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 34s linear infinite;
+
+  &:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+ * Scroll reveal — <Reveal> component element ke viewport me aate hi
+ * data-visible="true" laga deta hai.
+ * ------------------------------------------------------------------------- */
+
+@utility reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 0.8, 0.3, 1),
+    transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+
+  &[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility reveal-left {
+  opacity: 0;
+  transform: translateX(-34px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 0.8, 0.3, 1),
+    transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+
+  &[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility reveal-right {
+  opacity: 0;
+  transform: translateX(34px);
+  transition:
+    opacity 0.7s cubic-bezier(0.22, 0.8, 0.3, 1),
+    transform 0.7s cubic-bezier(0.22, 0.8, 0.3, 1);
+
+  &[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility reveal-zoom {
+  opacity: 0;
+  transform: scale(0.92);
+  transition:
+    opacity 0.65s cubic-bezier(0.22, 0.8, 0.3, 1),
+    transform 0.65s cubic-bezier(0.22, 0.8, 0.3, 1);
+
+  &[data-visible="true"] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hover par card ke upar se roshni ki lakeer nikalti hai */
+@utility card-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    background: linear-gradient(
+      115deg,
+      transparent 38%,
+      color-mix(in oklab, white 65%, transparent) 50%,
+      transparent 62%
+    );
+    transform: translateX(-130%);
+    transition: transform 0.8s cubic-bezier(0.22, 0.8, 0.3, 1);
+  }
+
+  &:hover::after {
+    transform: translateX(130%);
+  }
+}
+
+/* Heading ke neeche chhoti brand patti — reveal hote hi chaudi hoti hai */
+@utility heading-rule {
+  &::after {
+    content: "";
+    display: block;
+    height: 3px;
+    width: 0;
+    margin: 0.75rem auto 0;
+    border-radius: 9999px;
+    background: linear-gradient(90deg, var(--color-primary), var(--color-accent));
+    transition: width 0.8s cubic-bezier(0.22, 0.8, 0.3, 1) 0.15s;
+  }
+
+  &[data-visible="true"]::after {
+    width: 4.5rem;
+  }
+}
+
+/* CTA / stats band ka jeevit gradient — logo wala green, kinare par halka
+   saffron. Green se seedha red me jaane par beech me maila brown aa jaata tha. */
+@utility surface-flow {
+  background: linear-gradient(
+    120deg,
+    color-mix(in oklab, var(--color-brand-green) 88%, black) 0%,
+    var(--color-brand-green) 48%,
+    color-mix(in oklab, var(--color-brand-green) 80%, var(--color-accent)) 100%
+  );
+  background-size: 220% 220%;
+  animation: gradient-pan 14s ease-in-out infinite;
+}
+
+/* Halka sa dotted paper texture — sections ke background me */
+@utility dot-grid {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-foreground) 12%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 22px 22px;
 }
 
 /* Card par hover — upar uthta hai aur border brand color le leta hai */

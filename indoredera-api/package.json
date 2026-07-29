@@ -10,7 +10,9 @@
     "start": "node src/server.js",
     "seed": "node src/seed/seed.js",
     "seed:fresh": "node src/seed/seed.js --fresh",
-    "migrate": "node src/seed/migrate-json.js"
+    "migrate": "node src/seed/migrate-json.js",
+    "db:check": "node src/seed/db-check.js",
+    "db:copy": "node src/seed/copy-db.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
