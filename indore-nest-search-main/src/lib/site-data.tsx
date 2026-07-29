@@ -4,21 +4,22 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
-import { properties as seedProperties, type Property } from "./properties";
-import { fetchRemoteState, pushSiteData } from "./remote-store";
+import { api, ApiError, onTokenChange } from "./api-client";
+import type { Property } from "./properties";
 
 /*
- * Saara editable site content ek jagah — hero text, logo text, banners,
- * testimonials, listings aur plans. Admin panel isi ko mutate karta hai.
+ * Saara editable site content ek jagah — hero text, banners, testimonials,
+ * listings aur plans. Sab kuch backend se aata hai (GET /api/content) aur har
+ * mutation apne resource endpoint par jaati hai.
  *
- * TODO(backend): defaults ko GET /api/content se load karein aur har mutation ko
- * PATCH /api/admin/* se. Keys jaan-boojh kar backend schema jaisi rakhi hain.
+ * Pehle ye poora blob localStorage me rehta tha aur server par push hota tha.
+ * Ab database hi source of truth hai: browser sirf ek cache hai jise hum reload
+ * ya refresh() par bhar dete hain.
  */
-
-const STORAGE_KEY = "indoredera:site-data";
 
 export type Audience = "guest" | "user" | "owner";
 
@@ -78,315 +79,122 @@ export interface SiteData {
   plans: Plan[];
 }
 
-const defaultHero: HeroContent = {
+/*
+ * SSR aur pehle client render ke liye khaali shell — server se data aane tak
+ * yahi rehta hai. Text defaults ab database me hain (indoredera-api ka seed),
+ * isliye yahan sirf itna rakha hai ki layout na toote.
+ */
+const emptyHero: HeroContent = {
   logoText: "Indore Dera",
   logoTagline: "अपना घर, अपना शहर",
-  badge: "Indore ka apna rental platform",
-  titleStart: "Indore me",
-  titleHighlight: "kiraye ka ghar",
-  titleEnd: "dhundhna ab aasaan",
-  subtitle:
-    "Flat, room, dukaan, PG ya zameen — sab kuch ek jagah. Bina broker ke, seedha owner se baat karein.",
-  searchCta: "Search ",
-  ownerCta: "Owner hoon — property list karni hai",
-  lockedTitle: "Properties dekhne ke liye login zaroori hai",
-  lockedSubtitle:
-    "Free account banayein aur Indore ki saari verified listings, rent, photos aur owner ka number turant dekhein.",
+  badge: "",
+  titleStart: "",
+  titleHighlight: "",
+  titleEnd: "",
+  subtitle: "",
+  searchCta: "Search",
+  ownerCta: "",
+  lockedTitle: "",
+  lockedSubtitle: "",
 };
 
-const defaultBanners: Banner[] = [
-  {
-    id: "b-guest-1",
-    audience: "guest",
-    title: "Zero brokerage, 100% Indore",
-    subtitle: "Account banayein aur 500+ verified listings unlock karein.",
-    image:
-      "https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=1400&q=70",
-    ctaLabel: "Free account banayein",
-    active: true,
-  },
-  {
-    id: "b-user-1",
-    audience: "user",
-    title: "Naye flats roz add ho rahe hain",
-    subtitle: "Vijay Nagar, Nipania aur Super Corridor me fresh listings dekhein.",
-    image:
-      "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1400&q=70",
-    ctaLabel: "Browse karein",
-    active: true,
-  },
-  {
-    id: "b-user-2",
-    audience: "user",
-    title: "PG dhoondh rahe hain?",
-    subtitle: "Bhawarkuan aur Annapurna ke student-friendly PG, meals ke saath.",
-    image:
-      "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=1400&q=70",
-    ctaLabel: "PG dekhein",
-    active: true,
-  },
-  {
-    id: "b-owner-1",
-    audience: "owner",
-    title: "Pehli listing bilkul free",
-    subtitle: "Apni property post karein — hazaaron Indore tenants tak pahunchein.",
-    image:
-      "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1400&q=70",
-    ctaLabel: "Property list karein",
-    active: true,
-  },
-];
-
-const defaultTestimonials: Testimonial[] = [
-  {
-    id: "t-1",
-    name: "Pooja Sharma",
-    locality: "Vijay Nagar",
-    rating: 5,
-    message:
-      "Do din me 2 BHK mil gaya, wo bhi bina kisi broker ke. Owner se seedha baat hui aur rent bhi kam mila.",
-    status: "approved",
-    createdAt: 0,
-  },
-  {
-    id: "t-2",
-    name: "Imran Khan",
-    locality: "Rajwada",
-    rating: 4,
-    message: "Apni dukaan yahan list ki thi, ek hafte me kirayedaar mil gaya. Listing free thi.",
-    status: "approved",
-    createdAt: 0,
-  },
-  {
-    id: "t-3",
-    name: "Anjali Verma",
-    locality: "Bhawarkuan",
-    rating: 5,
-    message: "Girls PG dhoondhna Indore me mushkil tha. Yahan photos aur meals ki detail mil gayi.",
-    status: "approved",
-    createdAt: 0,
-  },
-];
-
-const defaultPlans: Plan[] = [
-  {
-    id: "one-time",
-    label: "One-time listing",
-    price: 99,
-    period: "ek listing",
-    credits: 1,
-    durationDays: null,
-    perks: ["Ek extra property post karein", "30 din tak live", "Owner ka number visible"],
-  },
-  {
-    id: "monthly",
-    label: "Monthly",
-    price: 299,
-    period: "/ month",
-    credits: null,
-    durationDays: 30,
-    perks: ["Unlimited listings", "Featured tag", "Priority support"],
-    highlight: true,
-  },
-  {
-    id: "yearly",
-    label: "Yearly",
-    price: 1999,
-    period: "/ year",
-    credits: null,
-    durationDays: 365,
-    perks: ["Unlimited listings", "Featured tag", "2 mahine free", "Priority support"],
-  },
-];
-
-const defaultSiteData: SiteData = {
-  hero: defaultHero,
-  banners: defaultBanners,
-  testimonials: defaultTestimonials,
-  listings: seedProperties.map((p) => ({ ...p, status: "approved" as const })),
-  plans: defaultPlans,
+const emptySiteData: SiteData = {
+  hero: emptyHero,
+  banners: [],
+  testimonials: [],
+  listings: [],
+  plans: [],
 };
+
+type ContentResponse = SiteData & { updatedAt: number };
 
 type SiteDataContextValue = {
   data: SiteData;
-  /** localStorage merge hone ke baad true. */
+  /** Server se pehla jawab aane ke baad true. */
   ready: boolean;
-  updateHero: (patch: Partial<HeroContent>) => void;
-  saveBanner: (banner: Banner) => void;
-  removeBanner: (id: string) => void;
-  addTestimonial: (input: Omit<Testimonial, "id" | "status" | "createdAt">) => void;
-  setTestimonialStatus: (id: string, status: Testimonial["status"]) => void;
-  removeTestimonial: (id: string) => void;
-  savePlan: (plan: Plan) => void;
-  saveListing: (listing: Property) => void;
-  setListingStatus: (id: string, status: NonNullable<Property["status"]>) => void;
-  removeListing: (id: string) => void;
-  resetAll: () => void;
+  /** Server tak pahunch nahi paaye to yahan message aata hai. */
+  error: string | null;
+  /** Server se sab kuch dobara load karta hai. */
+  refresh: () => Promise<void>;
+  /** Nayi listing banata hai — id, owner aur status server decide karta hai. */
+  saveListing: (listing: NewListing) => Promise<Property>;
+  /** Owner ya admin apni listing hata sakta hai. */
+  removeListing: (id: string) => Promise<void>;
+  /** Feedback bhejta hai — server par hamesha "pending" me jaata hai. */
+  addTestimonial: (input: Omit<Testimonial, "id" | "status" | "createdAt">) => Promise<void>;
 };
+
+/** Listing banate waqt client jo bhej sakta hai (baaki server bharta hai). */
+export type NewListing = Omit<
+  Property,
+  "id" | "ownerId" | "ownerName" | "ownerPhone" | "postedAgo" | "createdAt" | "featured"
+> & { status: "draft" | "pending" };
 
 const SiteDataContext = createContext<SiteDataContextValue | null>(null);
 
 export function SiteDataProvider({ children }: { children: ReactNode }) {
-  // SSR aur pehle client render par defaults — warna hydration mismatch hota hai
-  const [data, setData] = useState<SiteData>(defaultSiteData);
+  const [data, setData] = useState<SiteData>(emptySiteData);
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  // StrictMode ke double-effect me do parallel loads na chalein
+  const loadingRef = useRef(false);
 
-    async function load() {
-      // pehle shared data server (admin panel bhi wahi use karta hai),
-      // wo na mile to localStorage, warna defaults
-      const remote = await fetchRemoteState<Partial<SiteData>, unknown>();
-      if (cancelled) return;
-
-      const saved =
-        remote?.siteData ??
-        (() => {
-          try {
-            const raw = window.localStorage.getItem(STORAGE_KEY);
-            return raw ? (JSON.parse(raw) as Partial<SiteData>) : null;
-          } catch {
-            return null; // corrupt payload — defaults hi rehne do
-          }
-        })();
-
-      if (saved) {
-        setData({
-          hero: { ...defaultHero, ...saved.hero },
-          banners: saved.banners ?? defaultBanners,
-          testimonials: saved.testimonials ?? defaultTestimonials,
-          listings: saved.listings ?? defaultSiteData.listings,
-          plans: saved.plans ?? defaultPlans,
-        });
-      }
+  const load = useCallback(async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    try {
+      const content = await api.get<ContentResponse>("/api/content");
+      setData({
+        hero: { ...emptyHero, ...content.hero },
+        banners: content.banners ?? [],
+        testimonials: content.testimonials ?? [],
+        listings: content.listings ?? [],
+        plans: content.plans ?? [],
+      });
+      setError(null);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Content load nahi ho paaya.");
+    } finally {
+      loadingRef.current = false;
       setReady(true);
     }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
   }, []);
 
-  // ready hone ke baad hi likhein, warna mount par defaults save ho jaate hain
   useEffect(() => {
-    if (!ready) return;
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-    } catch {
-      // uploaded photos base64 me hoti hain — quota bhar jaane par bhi app
-      // chalti rehni chahiye, shared server par data phir bhi chala jaata hai
-      console.warn("Local storage bhar gaya — listing sirf server par save hui.");
-    }
-    void pushSiteData(data);
-  }, [data, ready]);
+    void load();
 
-  const updateHero = useCallback((patch: Partial<HeroContent>) => {
-    setData((d) => ({ ...d, hero: { ...d.hero, ...patch } }));
-  }, []);
+    /* Login/logout par content badalta hai — owner ko apni draft/pending
+       listings dikhti hain, guest ko sirf approved. Isliye token badalte hi
+       dobara load karte hain. */
+    return onTokenChange(() => void load());
+  }, [load]);
 
-  const saveBanner = useCallback((banner: Banner) => {
-    setData((d) => {
-      const exists = d.banners.some((b) => b.id === banner.id);
-      return {
-        ...d,
-        banners: exists
-          ? d.banners.map((b) => (b.id === banner.id ? banner : b))
-          : [...d.banners, banner],
-      };
-    });
-  }, []);
-
-  const removeBanner = useCallback((id: string) => {
-    setData((d) => ({ ...d, banners: d.banners.filter((b) => b.id !== id) }));
-  }, []);
-
-  const addTestimonial = useCallback<SiteDataContextValue["addTestimonial"]>((input) => {
-    setData((d) => ({
-      ...d,
-      testimonials: [
-        // naya feedback pending rehta hai jab tak admin approve na kare
-        { ...input, id: crypto.randomUUID(), status: "pending", createdAt: Date.now() },
-        ...d.testimonials,
-      ],
-    }));
-  }, []);
-
-  const setTestimonialStatus = useCallback<SiteDataContextValue["setTestimonialStatus"]>(
-    (id, status) => {
-      setData((d) => ({
-        ...d,
-        testimonials: d.testimonials.map((t) => (t.id === id ? { ...t, status } : t)),
-      }));
+  const saveListing = useCallback<SiteDataContextValue["saveListing"]>(
+    async (listing) => {
+      const { property } = await api.post<{ property: Property }>("/api/properties", listing);
+      // apni nayi listing turant dikhe — server ka poora reload na wait karna pade
+      setData((d) => ({ ...d, listings: [property, ...d.listings] }));
+      return property;
     },
     [],
   );
 
-  const removeTestimonial = useCallback((id: string) => {
-    setData((d) => ({ ...d, testimonials: d.testimonials.filter((t) => t.id !== id) }));
-  }, []);
-
-  const savePlan = useCallback((plan: Plan) => {
-    setData((d) => ({ ...d, plans: d.plans.map((p) => (p.id === plan.id ? plan : p)) }));
-  }, []);
-
-  const saveListing = useCallback((listing: Property) => {
-    setData((d) => {
-      const exists = d.listings.some((p) => p.id === listing.id);
-      return {
-        ...d,
-        listings: exists
-          ? d.listings.map((p) => (p.id === listing.id ? listing : p))
-          : [listing, ...d.listings],
-      };
-    });
-  }, []);
-
-  const setListingStatus = useCallback<SiteDataContextValue["setListingStatus"]>((id, status) => {
-    setData((d) => ({
-      ...d,
-      listings: d.listings.map((p) => (p.id === id ? { ...p, status } : p)),
-    }));
-  }, []);
-
-  const removeListing = useCallback((id: string) => {
+  const removeListing = useCallback<SiteDataContextValue["removeListing"]>(async (id) => {
+    await api.delete(`/api/properties/${id}`);
     setData((d) => ({ ...d, listings: d.listings.filter((p) => p.id !== id) }));
   }, []);
 
-  const resetAll = useCallback(() => setData(defaultSiteData), []);
+  const addTestimonial = useCallback<SiteDataContextValue["addTestimonial"]>(async (input) => {
+    /* Jawab me pending testimonial aata hai par use local list me nahi daalte —
+       website sirf approved dikhati hai, aur admin ke approve karne par wo agle
+       load par apne aap aa jaayega. */
+    await api.post("/api/testimonials", input);
+  }, []);
 
   const value = useMemo<SiteDataContextValue>(
-    () => ({
-      data,
-      ready,
-      updateHero,
-      saveBanner,
-      removeBanner,
-      addTestimonial,
-      setTestimonialStatus,
-      removeTestimonial,
-      savePlan,
-      saveListing,
-      setListingStatus,
-      removeListing,
-      resetAll,
-    }),
-    [
-      data,
-      ready,
-      updateHero,
-      saveBanner,
-      removeBanner,
-      addTestimonial,
-      setTestimonialStatus,
-      removeTestimonial,
-      savePlan,
-      saveListing,
-      setListingStatus,
-      removeListing,
-      resetAll,
-    ],
+    () => ({ data, ready, error, refresh: load, saveListing, removeListing, addTestimonial }),
+    [data, ready, error, load, saveListing, removeListing, addTestimonial],
   );
 
   return <SiteDataContext.Provider value={value}>{children}</SiteDataContext.Provider>;
@@ -398,7 +206,12 @@ export function useSiteData() {
   return ctx;
 }
 
-/** Sirf wahi listings jo public par dikhni chahiye. */
+/**
+ * Sirf wahi listings jo public par dikhni chahiye.
+ *
+ * Server pehle hi filter karta hai, par owner ko apni draft/pending listings
+ * bhi milti hain — home/properties page par wo nahi dikhni chahiye.
+ */
 export function publicListings(listings: Property[]) {
   return listings.filter((p) => p.status !== "draft" && p.status !== "pending");
 }

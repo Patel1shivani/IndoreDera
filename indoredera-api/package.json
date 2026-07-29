@@ -1,15 +1,28 @@
 {
   "name": "indoredera-api",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Shared data server so the site (8080) and admin panel (5174) see the same data.",
+  "description": "Indore Dera backend — Express + MongoDB (Mongoose) + JWT auth.",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js"
+    "dev": "node --watch src/server.js",
+    "start": "node src/server.js",
+    "seed": "node src/seed/seed.js",
+    "seed:fresh": "node src/seed/seed.js --fresh",
+    "migrate": "node src/seed/migrate-json.js"
   },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "express": "^4.21.2"
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "helmet": "^8.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.9.5",
+    "morgan": "^1.10.0",
+    "zod": "^3.24.2"
   }
 }

@@ -90,10 +90,10 @@ function Profile() {
     setEditing(true);
   }
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
     try {
-      updateProfile(form);
+      await updateProfile(form);
       setEditing(false);
       toast.success("Profile update ho gaya");
     } catch (err) {
@@ -160,7 +160,7 @@ function Profile() {
       {/* Edit form — sirf Edit dabane par khulta hai */}
       {editing && (
         <form
-          onSubmit={handleSave}
+          onSubmit={(e) => void handleSave(e)}
           className="animate-rise-in mt-4 rounded-3xl border border-border bg-card p-6 shadow-soft"
         >
           <h2 className="font-display text-xl tracking-wide">Details update karein</h2>

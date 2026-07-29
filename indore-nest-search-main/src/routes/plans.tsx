@@ -2,7 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { GoCheck, GoCreditCard, GoInfo, GoPlus, GoStarFill, GoVerified } from "react-icons/go";
 import { toast } from "sonner";
-import { isPlanActive, useAuth, type UserPlan } from "@/lib/auth";
+import { AuthError, isPlanActive, useAuth } from "@/lib/auth";
 import { sendMail } from "@/lib/mailer";
 import { useSiteData, type Plan } from "@/lib/site-data";
 
@@ -41,26 +41,27 @@ function PlansPage() {
 
     setBusyPlan(plan.id);
 
-    // TODO(backend): yahan Razorpay order banayein aur signature verify hone ke
-    // baad hi POST /api/plans/purchase call karein. Abhi ye sirf mock hai.
-    const userPlan: UserPlan = {
-      id: plan.id,
-      label: plan.label,
-      credits: plan.credits,
-      expiresAt: plan.durationDays ? Date.now() + plan.durationDays * 86_400_000 : null,
-    };
-    activatePlan(userPlan);
-    await sendMail({
-      to: user.email,
-      template: "plan-purchased",
-      data: { plan: plan.label, amount: plan.price },
-    });
+    /* Plan server par activate hota hai — credits aur expiry wahi calculate
+       karta hai, isliye client inhe bhejta nahi.
+       TODO(payments): Razorpay order pehle banega aur signature verify hone ke
+       baad hi ye call jaayegi. Abhi koi paisa nahi lagta. */
+    try {
+      await activatePlan(plan.id);
+      await sendMail({
+        to: user.email,
+        template: "plan-purchased",
+        data: { plan: plan.label, amount: plan.price },
+      });
 
-    toast.success(`${plan.label} activate ho gaya`, {
-      description: "Ab aap nayi listing post kar sakte hain.",
-    });
-    setBusyPlan(null);
-    navigate({ to: "/list-property" });
+      toast.success(`${plan.label} activate ho gaya`, {
+        description: "Ab aap nayi listing post kar sakte hain.",
+      });
+      navigate({ to: "/list-property" });
+    } catch (err) {
+      toast.error(err instanceof AuthError ? err.message : "Plan activate nahi ho paaya.");
+    } finally {
+      setBusyPlan(null);
+    }
   }
 
   return (

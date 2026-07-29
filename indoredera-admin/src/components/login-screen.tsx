@@ -1,16 +1,29 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { api, API_BASE } from "../lib/api";
 import { demoCredentials, useAdminAuth } from "../lib/auth";
 import { Icons } from "../lib/icons";
-import { useStore } from "../lib/store";
 
 export function LoginScreen() {
   const { login } = useAdminAuth();
-  const { loading, users, error: storeError } = useStore();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [serverUp, setServerUp] = useState<boolean | null>(null);
+
+  /* Login se pehle hi bata dein ki backend band hai — warna user password
+     galat samajh kar baar-baar try karta rehta hai. */
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .health()
+      .then(() => !cancelled && setServerUp(true))
+      .catch(() => !cancelled && setServerUp(false));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -44,21 +57,21 @@ export function LoginScreen() {
         </div>
 
         <form onSubmit={handleSubmit} className="card space-y-4 p-6">
-          {(error || storeError) && (
+          {error && (
             <p
               role="alert"
               className="flex items-start gap-2 rounded-lg border border-brand/30 bg-brand-soft px-3 py-2.5 text-sm text-brand"
             >
               <Icons.alert aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-              {error ?? storeError}
+              {error}
             </p>
           )}
 
-          {!loading && users.length === 0 && !storeError && (
+          {serverUp === false && (
             <p className="flex items-start gap-2 rounded-lg border border-warn/40 bg-warn-soft px-3 py-2.5 text-sm">
               <Icons.info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-              Data server par abhi koi user nahi hai. Ek baar website kholein — wo demo admin
-              account bana degi.
+              Backend ({API_BASE}) nahi chal raha. indoredera-api folder me &quot;npm run dev&quot;
+              chalayein.
             </p>
           )}
 
@@ -116,7 +129,7 @@ export function LoginScreen() {
             </div>
           </div>
 
-          <button type="submit" disabled={busy || loading} className="btn btn-primary w-full">
+          <button type="submit" disabled={busy} className="btn btn-primary w-full">
             <Icons.lock className="h-4 w-4" />
             {busy ? "Login ho raha hai..." : "Login"}
           </button>

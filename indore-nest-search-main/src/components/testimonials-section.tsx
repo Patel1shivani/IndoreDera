@@ -18,6 +18,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ApiError } from "@/lib/api-client";
 import { useAuth } from "@/lib/auth";
 import { localities } from "@/lib/properties";
 import { useSiteData } from "@/lib/site-data";
@@ -61,19 +62,23 @@ export function TestimonialsSection() {
     el.scrollBy({ left: dir * el.clientWidth, behavior: "smooth" });
   };
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    addTestimonial({
-      name: form.name.trim() || user?.name || "Anonymous",
-      locality: form.locality,
-      rating: form.rating,
-      message: form.message.trim(),
-    });
-    setForm({ name: "", locality: localities[0], rating: 5, message: "" });
-    setOpen(false);
-    toast.success("Shukriya! Aapka feedback bhej diya gaya", {
-      description: "Admin approve karte hi ye website par dikhne lagega.",
-    });
+    try {
+      await addTestimonial({
+        name: form.name.trim() || user?.name || "Anonymous",
+        locality: form.locality,
+        rating: form.rating,
+        message: form.message.trim(),
+      });
+      setForm({ name: "", locality: localities[0], rating: 5, message: "" });
+      setOpen(false);
+      toast.success("Shukriya! Aapka feedback bhej diya gaya", {
+        description: "Admin approve karte hi ye website par dikhne lagega.",
+      });
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Feedback bhej nahi paaye.");
+    }
   }
 
   return (
@@ -147,7 +152,7 @@ export function TestimonialsSection() {
                 Admin approve karte hi aapka feedback website par dikhne lagega.
               </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="grid gap-4 text-left">
+            <form onSubmit={(e) => void handleSubmit(e)} className="grid gap-4 text-left">
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="fb-name" className="mb-1.5 block text-sm font-medium">

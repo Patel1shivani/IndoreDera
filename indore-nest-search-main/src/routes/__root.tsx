@@ -129,8 +129,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <SiteDataProvider>
-        <AuthProvider>
+      {/* AuthProvider bahar hai: login/logout par site content dobara load hota
+          hai (owner ko apni draft/pending listings dikhni chahiye), isliye
+          SiteDataProvider ko session ke andar rehna chahiye. */}
+      <AuthProvider>
+        <SiteDataProvider>
           {/* Pehli baar site khulne par sitare wala intro */}
           <IntroSplash />
           <div className="flex min-h-screen flex-col">
@@ -144,8 +147,8 @@ function RootComponent() {
           {/* Alerts right side me — center me nahi, taaki content block na ho.
               richColors jaan-boojh kar band hai: styling styles.css se aati hai. */}
           <Toaster position="top-right" closeButton />
-        </AuthProvider>
-      </SiteDataProvider>
+        </SiteDataProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

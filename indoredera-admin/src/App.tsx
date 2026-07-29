@@ -19,29 +19,42 @@ import type { PageId } from "./pages/registry";
 /*
  * Indore Dera Admin — standalone app.
  *
- * Website (localhost:8080) se poori tarah alag hai. Beech me sirf shared data
- * server (localhost:4000) hai — dono usi ko padhte-likhte hain.
+ * Website (localhost:8080) se poori tarah alag hai. Beech me sirf backend
+ * (localhost:4000) hai — dono usi ko padhte-likhte hain.
+ *
+ * AuthProvider bahar hai aur StoreProvider login ke BAAD mount hota hai: admin
+ * data (users, pending listings) ke liye server ko JWT chahiye, isliye login se
+ * pehle usse maangne ka koi matlab nahi — sirf 401 aata.
  */
 export function App() {
   return (
-    <StoreProvider>
-      <AuthProvider>
-        <Gate />
-      </AuthProvider>
-    </StoreProvider>
+    <AuthProvider>
+      <Gate />
+    </AuthProvider>
   );
 }
 
 function Gate() {
-  const { admin } = useAdminAuth();
+  const { admin, ready } = useAdminAuth();
   const [page, setPage] = useState<PageId>("dashboard");
+
+  // purana token verify hone tak login screen flash na ho
+  if (!ready) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-[#540404] to-[#2a0a0a]">
+        <div className="h-10 w-10 animate-pulse rounded-xl bg-white/20" />
+      </div>
+    );
+  }
 
   if (!admin) return <LoginScreen />;
 
   return (
-    <Layout current={page} onNavigate={setPage}>
-      <PageBody page={page} onNavigate={setPage} />
-    </Layout>
+    <StoreProvider>
+      <Layout current={page} onNavigate={setPage}>
+        <PageBody page={page} onNavigate={setPage} />
+      </Layout>
+    </StoreProvider>
   );
 }
 
@@ -61,13 +74,13 @@ function PageBody({ page, onNavigate }: { page: PageId; onNavigate: (id: PageId)
     );
   }
 
-  // server chal raha hai par usme abhi kuch hai nahi
+  // server chal raha hai par database khaali hai
   if (empty) {
     return (
       <EmptyState
         icon={Icons.database}
-        title="Data server abhi khaali hai"
-        hint="Ek baar website (localhost:8080) kholein — wo default content server par bhej degi, phir yahan sab dikhne lagega."
+        title="Database abhi khaali hai"
+        hint='indoredera-api folder me "npm run seed" chalayein — wo default content (listings, banners, plans) bana dega.'
       />
     );
   }

@@ -16,6 +16,7 @@ import {
   GoX,
 } from "react-icons/go";
 import type { IconType } from "react-icons";
+import { toast } from "sonner";
 import { ImageCarousel } from "@/components/image-carousel";
 import { LoginGate } from "@/components/login-gate";
 import {
@@ -26,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { ApiError } from "@/lib/api-client";
 import { canPostListing, FREE_LISTINGS_PER_OWNER, isPlanActive, useAuth } from "@/lib/auth";
 import { formatRent, propertyImages, propertyTypes, type Property } from "@/lib/properties";
 import { useSiteData } from "@/lib/site-data";
@@ -47,6 +49,17 @@ function Dashboard() {
   const { user, ready } = useAuth();
   const { data, removeListing } = useSiteData();
   const [preview, setPreview] = useState<Property | null>(null);
+
+  /* Delete ab server par jaata hai — fail ho sakta hai (session expire, listing
+     pehle hi hat chuki), isliye jawab user ko dikhana zaroori hai. */
+  async function handleDelete(p: Property) {
+    try {
+      await removeListing(p.id);
+      toast.success("Listing hata di gayi");
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Listing hat nahi paayi.");
+    }
+  }
 
   if (!ready) {
     return (
@@ -151,7 +164,7 @@ function Dashboard() {
                 <button
                   type="button"
                   className="inline-flex items-center gap-1.5 rounded-full border border-destructive/40 px-4 py-2 text-sm font-semibold text-destructive hover:bg-destructive/10"
-                  onClick={() => removeListing(p.id)}
+                  onClick={() => void handleDelete(p)}
                 >
                   <GoTrash aria-hidden="true" className="h-4 w-4" />
                   Delete

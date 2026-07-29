@@ -1,74 +1,93 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
-import { hashPassword } from "./api";
-import { useStore } from "./store";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { api, ApiError, getToken, setToken } from "./api";
 import type { User } from "./types";
 
-/**
- * Admin app ka apna auth. Users shared server se aate hain (wahi list jo
- * website use karti hai), session sirf is tab me rehta hai.
+/*
+ * Admin session.
  *
- * TODO(backend): asli backend par ye POST /api/auth/login banega aur session
- * httpOnly JWT cookie me jaayega. Password compare server par hoga, yahan nahi.
+ * Password compare server par hota hai (bcrypt) aur "kya ye admin hai" bhi
+ * server hi decide karta hai — yahan sirf JWT rakha jaata hai. Pehle users ki
+ * poori list client par aati thi aur hash yahin compare hota tha; ab wo list
+ * login se pehle milti hi nahi.
  */
-
-const SESSION_KEY = "indoredera-admin:session";
 
 type AuthValue = {
   admin: User | null;
+  /** Purana token verify hone tak false — tab tak login screen mat dikhao. */
+  ready: boolean;
   login: (identifier: string, password: string) => Promise<void>;
   logout: () => void;
 };
 
 const AuthContext = createContext<AuthValue | null>(null);
 
-function normalizePhone(phone: string) {
-  return phone.replace(/\D/g, "").slice(-10);
-}
-
 export class LoginError extends Error {}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const { users } = useStore();
-  const [adminId, setAdminId] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : window.sessionStorage.getItem(SESSION_KEY),
-  );
+  const [admin, setAdmin] = useState<User | null>(null);
+  const [ready, setReady] = useState(false);
 
-  // users server se aate hain, isliye session id se har render par resolve karte hain
-  const admin = useMemo(() => {
-    const found = users.find((u) => u.id === adminId);
-    return found?.role === "admin" ? found : null;
-  }, [users, adminId]);
+  // reload par purana token abhi bhi valid ho sakta hai
+  useEffect(() => {
+    let cancelled = false;
 
-  const login = useCallback(
-    async (identifier: string, password: string) => {
-      const trimmed = identifier.trim().toLowerCase();
-      const asPhone = normalizePhone(identifier);
-
-      const found = users.find(
-        (u) =>
-          u.email.toLowerCase() === trimmed ||
-          (asPhone.length === 10 && normalizePhone(u.phone) === asPhone),
-      );
-
-      if (!found || found.passwordHash !== (await hashPassword(password))) {
-        throw new LoginError("Email/mobile ya password galat hai.");
+    async function bootstrap() {
+      if (!getToken()) {
+        setReady(true);
+        return;
       }
-      if (found.role !== "admin") {
-        throw new LoginError(`Ye account "${found.role}" hai — admin access nahi hai.`);
+      try {
+        const { user } = await api.me();
+        if (!cancelled && user.role === "admin") setAdmin(user);
+      } catch {
+        /* expire/invalid token ya server band — dono me logged-out maan lete hain */
+      } finally {
+        if (!cancelled) setReady(true);
       }
+    }
 
-      window.sessionStorage.setItem(SESSION_KEY, found.id);
-      setAdminId(found.id);
-    },
-    [users],
-  );
-
-  const logout = useCallback(() => {
-    window.sessionStorage.removeItem(SESSION_KEY);
-    setAdminId(null);
+    void bootstrap();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  const value = useMemo<AuthValue>(() => ({ admin, login, logout }), [admin, login, logout]);
+  const login = useCallback(async (identifier: string, password: string) => {
+    let session: { token: string; user: User };
+    try {
+      session = await api.login(identifier, password);
+    } catch (err) {
+      throw new LoginError(err instanceof ApiError ? err.message : "Login nahi ho paaya.");
+    }
+
+    /* Non-admin ka token save nahi karte. Server waise bhi har admin route par
+       role check karta hai, par panel me ghusne dena confusing hoga. */
+    if (session.user.role !== "admin") {
+      throw new LoginError(`Ye account "${session.user.role}" hai — admin access nahi hai.`);
+    }
+
+    setToken(session.token);
+    setAdmin(session.user);
+  }, []);
+
+  const logout = useCallback(() => {
+    setToken(null);
+    setAdmin(null);
+    void api.logout().catch(() => {});
+  }, []);
+
+  const value = useMemo<AuthValue>(
+    () => ({ admin, ready, login, logout }),
+    [admin, ready, login, logout],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
@@ -79,4 +98,6 @@ export function useAdminAuth() {
   return ctx;
 }
 
+/* Demo shortcut — production me hata dena hai. Ye credentials backend ke .env
+   (ADMIN_EMAIL / ADMIN_PASSWORD) se aate hain. */
 export const demoCredentials = { email: "admin@indoredera.in", password: "admin123" };

@@ -511,7 +511,16 @@
       "role": "owner",
       "plan": null,
       "passwordHash": "c1e79104fa74f595ea896e24cabbc37ba0c524c762e11bd6de50868e2d380b67"
+    },
+    {
+      "id": "0ab17769-3ec3-42ee-a864-a0be4b2cbc10",
+      "name": "Kiona Frederick",
+      "phone": "9518099289",
+      "email": "jiloqa@mailinator.com",
+      "role": "owner",
+      "plan": null,
+      "passwordHash": "c1e79104fa74f595ea896e24cabbc37ba0c524c762e11bd6de50868e2d380b67"
     }
   ],
-  "updatedAt": 1785233312423
+  "updatedAt": 1785303482250
 }

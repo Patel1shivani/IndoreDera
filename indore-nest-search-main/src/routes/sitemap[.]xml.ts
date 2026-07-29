@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { properties } from "@/lib/properties";
+import { fetchPublicListings } from "@/lib/properties";
 
 const BASE_URL = "";
 
@@ -14,6 +14,10 @@ export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
+        /* Listings API se aati hain. Server band ho to sitemap khaali listings
+           ke saath bhi valid rehta hai — 500 dena SEO ke liye isse bura hai. */
+        const listings = await fetchPublicListings();
+
         const entries: SitemapEntry[] = [
           { path: "/", changefreq: "daily", priority: "1.0" },
           { path: "/properties", changefreq: "daily", priority: "0.9" },
@@ -23,7 +27,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/contact", changefreq: "yearly", priority: "0.5" },
           { path: "/privacy", changefreq: "yearly", priority: "0.3" },
           { path: "/terms", changefreq: "yearly", priority: "0.3" },
-          ...properties.map((p) => ({
+          ...listings.map((p) => ({
             path: `/properties/${p.id}`,
             changefreq: "weekly" as const,
             priority: "0.7",

@@ -13,11 +13,12 @@ import {
 } from "react-icons/go";
 import { toast } from "sonner";
 import { LoginGate } from "@/components/login-gate";
+import { ApiError } from "@/lib/api-client";
 import { canPostListing, FREE_LISTINGS_PER_OWNER, useAuth } from "@/lib/auth";
 import { fileToDataUrl, ImageUploadError, MAX_PHOTOS, MIN_PHOTOS } from "@/lib/image-upload";
 import { sendMail } from "@/lib/mailer";
 import { localities, propertyTypes, type Property, type PropertyType } from "@/lib/properties";
-import { useSiteData } from "@/lib/site-data";
+import { useSiteData, type NewListing } from "@/lib/site-data";
 
 export const Route = createFileRoute("/list-property")({
   head: () => ({
@@ -58,7 +59,7 @@ const fallbackImage =
   "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1000&q=70";
 
 function ListProperty() {
-  const { user, ready, consumeListingCredit } = useAuth();
+  const { user, ready, refreshUser } = useAuth();
   const { data, saveListing } = useSiteData();
 
   const [form, setForm] = useState(emptyForm);
@@ -120,9 +121,10 @@ function ListProperty() {
     setForm((f) => ({ ...f, images: f.images.filter((s) => s !== src) }));
   }
 
-  function buildListing(status: "pending" | "draft"): Property {
+  /* Sirf wahi fields jo owner bharta hai. id, ownerId, ownerName, postedAgo aur
+     createdAt server set karta hai — client inhe bhejta hi nahi. */
+  function buildListing(status: "pending" | "draft"): NewListing {
     return {
-      id: crypto.randomUUID(),
       title: form.title.trim(),
       titleHi: form.title.trim(),
       type: (form.type || "flat") as PropertyType,
@@ -141,12 +143,7 @@ function ListProperty() {
         .map((a) => a.trim())
         .filter(Boolean),
       description: form.description.trim(),
-      ownerName: user?.name ?? "Owner",
-      ownerId: user?.id,
-      ownerPhone: user?.phone,
-      postedAgo: "abhi",
       status,
-      createdAt: Date.now(),
     };
   }
 
@@ -159,21 +156,27 @@ function ListProperty() {
     }
     setBusy(true);
 
-    const listing = buildListing(status);
-    saveListing(listing);
+    try {
+      const listing = await saveListing(buildListing(status));
 
-    // free quota khatam ho chuka tha to plan ka credit kharch karo
-    if (status === "pending" && gate.reason === "plan") consumeListingCredit();
+      /* Quota server par enforce hota hai — plan ka credit wahi ghatata hai.
+         Yahan sirf user ka taaza snapshot le aate hain taaki "X credit bacha
+         hai" turant sahi dikhe. */
+      await refreshUser();
 
-    await sendMail({
-      to: user.email,
-      template: status === "draft" ? "listing-draft" : "listing-submitted",
-      data: { title: listing.title, rent: listing.rent },
-    });
+      await sendMail({
+        to: user.email,
+        template: status === "draft" ? "listing-draft" : "listing-submitted",
+        data: { title: listing.title, rent: listing.rent },
+      });
 
-    setSubmitted(status);
-    setForm(emptyForm);
-    setBusy(false);
+      setSubmitted(status);
+      setForm(emptyForm);
+    } catch (err) {
+      toast.error(err instanceof ApiError ? err.message : "Listing save nahi ho paayi.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   if (!ready) {

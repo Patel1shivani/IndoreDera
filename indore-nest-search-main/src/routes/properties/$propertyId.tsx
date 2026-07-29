@@ -9,13 +9,14 @@ import {
   GoShieldCheck,
 } from "react-icons/go";
 import { ImageCarousel } from "@/components/image-carousel";
-import { formatRent, getProperty, propertyImages, propertyTypes } from "@/lib/properties";
+import { fetchProperty, formatRent, propertyImages, propertyTypes } from "@/lib/properties";
 import { useSiteData } from "@/lib/site-data";
 
 export const Route = createFileRoute("/properties/$propertyId")({
-  /* Seed listing server par mil jaati hai (SEO ke liye). Owner ki apni listing
-     sirf browser storage me hoti hai — wo component me site-data se aati hai. */
-  loader: ({ params }) => getProperty(params.propertyId) ?? null,
+  /* Approved listing SSR par API se aa jaati hai (SEO/og tags ke liye). Owner ki
+     apni draft/pending listing public endpoint par nahi milti — wo component me
+     site-data se aati hai. */
+  loader: ({ params }) => fetchProperty(params.propertyId),
   head: ({ loaderData }) => ({
     meta: loaderData
       ? [

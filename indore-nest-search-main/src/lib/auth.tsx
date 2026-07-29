@@ -7,20 +7,24 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { api, ApiError as ClientApiError, getToken, setToken } from "./api-client";
 import { sendMail } from "./mailer";
-import { fetchRemoteState, pushUsers } from "./remote-store";
 
 /*
- * Client-side demo auth. Users aur session browser ke localStorage me rehte hain —
- * jab asli backend aa jaaye to sirf yeh file badalni padegi, UI waisa hi rahega.
+ * Auth — poora backend par.
  *
- * TODO(backend): login/register ko POST /api/auth/* se replace karein aur
- * session ko httpOnly JWT cookie me rakhein. Field names backend se match karte hain.
+ * Password kabhi browser me hash nahi hota, users ki list client par nahi aati,
+ * aur role/plan wahi hai jo server kehta hai. Yahan sirf session JWT aur
+ * current user ka snapshot rehta hai.
+ *
+ * Component ke liye ye file waisi hi dikhti hai jaisi pehle thi — `useAuth()`
+ * ke methods same hain, bas ab sab `Promise` return karte hain.
  */
 
 export type Role = "tenant" | "owner" | "admin";
 
-/** Har owner ko itni listings free milti hain, uske baad plan lena padta hai. */
+/** Har owner ko itni listings free milti hain, uske baad plan lena padta hai.
+ *  Asli enforcement server par hai — ye sirf UI ka message banane ke liye hai. */
 export const FREE_LISTINGS_PER_OWNER = 1;
 
 export interface UserPlan {
@@ -41,69 +45,14 @@ export type User = {
   plan: UserPlan | null;
 };
 
-type StoredUser = User & { passwordHash: string };
-
-const USERS_KEY = "indoredera:users";
-const SESSION_KEY = "indoredera:session";
-
+/** UI purane `AuthError` ko catch karta hai — API errors bhi isi ke through aate hain. */
 export class AuthError extends Error {}
 
-function isBrowser() {
-  return typeof window !== "undefined" && typeof window.localStorage !== "undefined";
-}
-
-function readUsers(): StoredUser[] {
-  if (!isBrowser()) return [];
-  try {
-    const raw = window.localStorage.getItem(USERS_KEY);
-    const parsed: unknown = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? (parsed as StoredUser[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-/** localStorage sync rehta hai (baaki code sync padhta hai) aur shared server
- *  ko background me bhej dete hain, taaki admin app bhi wahi users dekhe. */
-function writeUsers(users: StoredUser[]) {
-  window.localStorage.setItem(USERS_KEY, JSON.stringify(users));
-  void pushUsers(users);
-}
-
-function toPublicUser({ id, name, phone, email, role, plan }: StoredUser): User {
-  return { id, name, phone, email, role, plan };
-}
-
-/**
- * Server aur browser, dono ki user list ko jodta hai.
- *
- * Pehle server ki list seedha localStorage ko replace kar deti thi — matlab jo
- * account server band hone ke dauraan bana, wo agle reload par gayab ho jaata
- * tha aur "email ya password galat hai" aata tha. Ab dono taraf ke accounts
- * bache rehte hain; takraav me server jeet-ta hai.
- */
-function mergeUsers(remote: StoredUser[], local: StoredUser[]): StoredUser[] {
-  const keysOf = (u: StoredUser) =>
-    [u.id, u.email?.toLowerCase(), normalizePhone(u.phone ?? "")].filter(Boolean);
-
-  const merged = [...remote];
-  const seen = new Set(remote.flatMap(keysOf));
-
-  for (const user of local) {
-    const keys = keysOf(user);
-    if (keys.some((k) => seen.has(k))) continue; // server par pehle se hai
-    merged.push(user);
-    keys.forEach((k) => seen.add(k));
-  }
-  return merged;
-}
-
-async function hashPassword(password: string): Promise<string> {
-  const bytes = new TextEncoder().encode(`indoredera:${password}`);
-  const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return Array.from(new Uint8Array(digest))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
+/** ApiError ko AuthError me badalta hai taaki call sites ka catch same rahe. */
+function toAuthError(error: unknown): AuthError {
+  if (error instanceof ClientApiError) return new AuthError(error.message);
+  if (error instanceof Error) return new AuthError(error.message);
+  return new AuthError("Kuch galat ho gaya. Dobara try karein.");
 }
 
 export function normalizePhone(phone: string) {
@@ -120,6 +69,9 @@ export function isPlanActive(plan: UserPlan | null): plan is UserPlan {
 /**
  * Owner nayi listing daal sakta hai ya nahi.
  * Pehli listing free — uske baad active plan chahiye.
+ *
+ * Server bhi bilkul yahi check karta hai (POST /api/properties → 402); ye copy
+ * sirf isliye hai taaki form kholne se pehle hi sahi screen dikhe.
  */
 export function canPostListing(user: User | null, listingsPosted: number) {
   if (!user) return { allowed: false, reason: "login" as const };
@@ -128,9 +80,11 @@ export function canPostListing(user: User | null, listingsPosted: number) {
   return { allowed: false, reason: "plan-required" as const };
 }
 
+type SessionResponse = { token: string; user: User };
+
 type AuthContextValue = {
   user: User | null;
-  /** SSR/hydration ke baad hi localStorage padha jaata hai. */
+  /** Session check hone ke baad hi true. */
   ready: boolean;
   login: (input: { identifier: string; password: string }) => Promise<User>;
   register: (input: {
@@ -142,13 +96,13 @@ type AuthContextValue = {
   }) => Promise<User>;
   logout: () => void;
   /** Profile page se naam/phone/email update karta hai. */
-  updateProfile: (input: { name: string; phone: string; email: string }) => User;
+  updateProfile: (input: { name: string; phone: string; email: string }) => Promise<User>;
   /** Purana password verify karke naya set karta hai. */
   changePassword: (input: { current: string; next: string }) => Promise<void>;
-  /** Plan kharidne ke baad user par save karta hai. */
-  activatePlan: (plan: UserPlan) => void;
-  /** One-time plan se ek listing credit kam karta hai. */
-  consumeListingCredit: () => void;
+  /** Plan kharidta hai — server plan ka snapshot user par chipka deta hai. */
+  activatePlan: (planId: string) => Promise<User>;
+  /** Server se taaza user leta hai (listing post karne ke baad credits update). */
+  refreshUser: () => Promise<User | null>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -156,31 +110,25 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
+
+  // page load par: token ho to server se verify karke user le aao
   useEffect(() => {
     let cancelled = false;
 
     async function bootstrap() {
-      // shared server ke users ko local users ke saath merge karte hain, taaki
-      // site aur admin panel ek hi list dekhein aur koi account khoye nahi
-      const remote = await fetchRemoteState<unknown, StoredUser>();
-      if (remote?.users?.length) {
-        const merged = mergeUsers(remote.users, readUsers());
-        window.localStorage.setItem(USERS_KEY, JSON.stringify(merged));
-        // jo account sirf browser me tha use server par bhi bhej dein
-        if (merged.length !== remote.users.length) void pushUsers(merged);
+      if (!getToken()) {
+        setReady(true);
+        return;
       }
-
-      const users = readUsers();
-
       try {
-        const raw = window.localStorage.getItem(SESSION_KEY);
-        const sessionId = raw ? (JSON.parse(raw) as { userId?: string }).userId : undefined;
-        const found = sessionId ? users.find((u) => u.id === sessionId) : undefined;
-        if (found && !cancelled) setUser(toPublicUser(found));
+        const { user: me } = await api.get<{ user: User }>("/api/auth/me");
+        if (!cancelled) setUser(me);
       } catch {
-        // corrupt session — ignore aur logged-out maan lo
+        /* Token purana/invalid hai (api-client ne use clear bhi kar diya) ya
+           server band hai — dono me logged-out maan lete hain. */
+      } finally {
+        if (!cancelled) setReady(true);
       }
-      if (!cancelled) setReady(true);
     }
 
     void bootstrap();
@@ -189,175 +137,102 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const startSession = useCallback((stored: StoredUser) => {
-    window.localStorage.setItem(SESSION_KEY, JSON.stringify({ userId: stored.id }));
-    const publicUser = toPublicUser(stored);
-    setUser(publicUser);
-    return publicUser;
-  }, []);
-
-  /** User record ko localStorage aur state dono me update karta hai. */
-  const patchUser = useCallback((patch: Partial<StoredUser>) => {
-    setUser((current) => {
-      if (!current) return current;
-      const users = readUsers();
-      const index = users.findIndex((u) => u.id === current.id);
-      if (index === -1) return current;
-      users[index] = { ...users[index], ...patch };
-      writeUsers(users);
-      return toPublicUser(users[index]);
-    });
+  const startSession = useCallback(({ token, user: next }: SessionResponse) => {
+    setToken(token);
+    setUser(next);
+    return next;
   }, []);
 
   const register = useCallback<AuthContextValue["register"]>(
     async ({ name, phone, email, password, role }) => {
-      const users = readUsers();
-      const normalizedEmail = email.trim().toLowerCase();
-      const normalizedPhone = normalizePhone(phone);
-
-      if (normalizedPhone.length !== 10) {
-        throw new AuthError("Mobile number 10 digit ka hona chahiye.");
+      try {
+        const session = await api.post<SessionResponse>("/api/auth/register", {
+          name,
+          phone,
+          email,
+          password,
+          role,
+        });
+        const next = startSession(session);
+        await sendMail({ to: next.email, template: "welcome", data: { name: next.name } });
+        return next;
+      } catch (error) {
+        throw toAuthError(error);
       }
-      if (password.length < 6) {
-        throw new AuthError("Password kam se kam 6 character ka rakhein.");
-      }
-      if (users.some((u) => u.email.toLowerCase() === normalizedEmail)) {
-        throw new AuthError("Yeh email pehle se registered hai. Login karein.");
-      }
-      if (users.some((u) => normalizePhone(u.phone) === normalizedPhone)) {
-        throw new AuthError("Yeh mobile number pehle se registered hai. Login karein.");
-      }
-
-      const stored: StoredUser = {
-        id: crypto.randomUUID(),
-        name: name.trim(),
-        phone: normalizedPhone,
-        email: normalizedEmail,
-        role,
-        plan: null,
-        passwordHash: await hashPassword(password),
-      };
-      writeUsers([...users, stored]);
-      const publicUser = startSession(stored);
-      await sendMail({
-        to: publicUser.email,
-        template: "welcome",
-        data: { name: publicUser.name },
-      });
-      return publicUser;
     },
     [startSession],
   );
 
   const login = useCallback<AuthContextValue["login"]>(
     async ({ identifier, password }) => {
-      const trimmed = identifier.trim().toLowerCase();
-      const asPhone = normalizePhone(identifier);
-      const found = readUsers().find(
-        (u) =>
-          u.email.toLowerCase() === trimmed ||
-          (asPhone.length === 10 && normalizePhone(u.phone) === asPhone),
-      );
-
-      if (!found || found.passwordHash !== (await hashPassword(password))) {
-        throw new AuthError("Email/mobile ya password galat hai.");
+      try {
+        const session = await api.post<SessionResponse>(
+          "/api/auth/login",
+          { identifier, password },
+          // galat password par purana session mat udaao
+          { keepSessionOn401: true },
+        );
+        const next = startSession(session);
+        await sendMail({ to: next.email, template: "login-alert", data: { name: next.name } });
+        return next;
+      } catch (error) {
+        throw toAuthError(error);
       }
-      const publicUser = startSession(found);
-      await sendMail({
-        to: publicUser.email,
-        template: "welcome",
-        data: { name: publicUser.name },
-      });
-      return publicUser;
     },
     [startSession],
   );
 
   const logout = useCallback(() => {
-    window.localStorage.removeItem(SESSION_KEY);
+    setToken(null);
     setUser(null);
+    // cookie bhi hataani hai; fail ho to bhi client-side logout ho chuka hai
+    void api.post("/api/auth/logout").catch(() => {});
   }, []);
 
-  /** Register jaisi hi validation — bas apne hi record ko chhod kar duplicate check hota hai. */
   const updateProfile = useCallback<AuthContextValue["updateProfile"]>(
-    ({ name, phone, email }) => {
-      if (!user) throw new AuthError("Pehle login karein.");
-
-      const users = readUsers();
-      const index = users.findIndex((u) => u.id === user.id);
-      if (index === -1) throw new AuthError("Account nahi mila. Dobara login karein.");
-
-      const trimmedName = name.trim();
-      const normalizedEmail = email.trim().toLowerCase();
-      const normalizedPhone = normalizePhone(phone);
-
-      if (trimmedName.length < 2) {
-        throw new AuthError("Naam kam se kam 2 character ka hona chahiye.");
+    async ({ name, phone, email }) => {
+      try {
+        const { user: next } = await api.patch<{ user: User }>("/api/auth/profile", {
+          name,
+          phone,
+          email,
+        });
+        setUser(next);
+        return next;
+      } catch (error) {
+        throw toAuthError(error);
       }
-      if (normalizedPhone.length !== 10) {
-        throw new AuthError("Mobile number 10 digit ka hona chahiye.");
-      }
-      if (!/^\S+@\S+\.\S+$/.test(normalizedEmail)) {
-        throw new AuthError("Email sahi format me likhein.");
-      }
-      if (users.some((u) => u.id !== user.id && u.email.toLowerCase() === normalizedEmail)) {
-        throw new AuthError("Yeh email kisi aur account par registered hai.");
-      }
-      if (users.some((u) => u.id !== user.id && normalizePhone(u.phone) === normalizedPhone)) {
-        throw new AuthError("Yeh mobile number kisi aur account par registered hai.");
-      }
-
-      users[index] = {
-        ...users[index],
-        name: trimmedName,
-        phone: normalizedPhone,
-        email: normalizedEmail,
-      };
-      writeUsers(users);
-      const publicUser = toPublicUser(users[index]);
-      setUser(publicUser);
-      return publicUser;
     },
-    [user],
+    [],
   );
 
-  const changePassword = useCallback<AuthContextValue["changePassword"]>(
-    async ({ current, next }) => {
-      if (!user) throw new AuthError("Pehle login karein.");
-      if (next.length < 6) throw new AuthError("Naya password kam se kam 6 character ka rakhein.");
+  const changePassword = useCallback<AuthContextValue["changePassword"]>(async ({ current, next }) => {
+    try {
+      await api.post("/api/auth/change-password", { current, next });
+    } catch (error) {
+      throw toAuthError(error);
+    }
+  }, []);
 
-      const users = readUsers();
-      const index = users.findIndex((u) => u.id === user.id);
-      if (index === -1) throw new AuthError("Account nahi mila. Dobara login karein.");
-      if (users[index].passwordHash !== (await hashPassword(current))) {
-        throw new AuthError("Purana password galat hai.");
-      }
+  const activatePlan = useCallback<AuthContextValue["activatePlan"]>(async (planId) => {
+    try {
+      const { user: next } = await api.post<{ user: User }>(`/api/plans/${planId}/purchase`);
+      setUser(next);
+      return next;
+    } catch (error) {
+      throw toAuthError(error);
+    }
+  }, []);
 
-      users[index] = { ...users[index], passwordHash: await hashPassword(next) };
-      writeUsers(users);
-    },
-    [user],
-  );
-
-  const activatePlan = useCallback(
-    (plan: UserPlan) => {
-      patchUser({ plan });
-    },
-    [patchUser],
-  );
-
-  const consumeListingCredit = useCallback(() => {
-    setUser((current) => {
-      if (!current?.plan || current.plan.credits === null) return current;
-      const users = readUsers();
-      const index = users.findIndex((u) => u.id === current.id);
-      if (index === -1) return current;
-      const plan = users[index].plan;
-      if (!plan || plan.credits === null) return current;
-      users[index] = { ...users[index], plan: { ...plan, credits: Math.max(0, plan.credits - 1) } };
-      writeUsers(users);
-      return toPublicUser(users[index]);
-    });
+  const refreshUser = useCallback<AuthContextValue["refreshUser"]>(async () => {
+    if (!getToken()) return null;
+    try {
+      const { user: next } = await api.get<{ user: User }>("/api/auth/me");
+      setUser(next);
+      return next;
+    } catch {
+      return null; // network hichki se logged-in user ko bahar mat karo
+    }
   }, []);
 
   const value = useMemo<AuthContextValue>(
@@ -370,19 +245,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       updateProfile,
       changePassword,
       activatePlan,
-      consumeListingCredit,
+      refreshUser,
     }),
-    [
-      user,
-      ready,
-      login,
-      register,
-      logout,
-      updateProfile,
-      changePassword,
-      activatePlan,
-      consumeListingCredit,
-    ],
+    [user, ready, login, register, logout, updateProfile, changePassword, activatePlan, refreshUser],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

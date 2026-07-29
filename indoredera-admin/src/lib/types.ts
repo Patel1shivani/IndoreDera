@@ -1,11 +1,14 @@
 /*
- * Shared data server ka shape.
+ * Backend API ka shape.
  *
  * Ye types website ke types se match karte hain. Dono apps alag hain, isliye
  * ye jaan-boojh kar duplicate hain — API contract hi beech ka rishta hai.
  *
- * TODO(backend): asli backend aane par ise ek shared package ya generated
- * types (OpenAPI/zod) se replace karein taaki drift na ho.
+ * Password hash yahan nahi hai kyunki server use kabhi bhejta hi nahi
+ * (user.model.js ka toJSON use hata deta hai).
+ *
+ * TODO: aage chal kar inhe backend ke zod schemas se generate karein
+ * (OpenAPI ya zod-to-ts), warna dono taraf dheere-dheere drift ho jaayega.
  */
 
 export type Role = "tenant" | "owner" | "admin";
@@ -27,8 +30,6 @@ export interface User {
   email: string;
   role: Role;
   plan: UserPlan | null;
-  /** Server par store hota hai; admin UI ise kabhi dikhata nahi. */
-  passwordHash?: string;
 }
 
 export interface Property {

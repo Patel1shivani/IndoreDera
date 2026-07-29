@@ -11,12 +11,17 @@ import {
 import { api, ApiError } from "./api";
 import type { Banner, Plan, Property, SiteData, Testimonial, User } from "./types";
 
-/**
- * Poora admin data ek jagah. Server hi single source of truth hai —
- * yahan koi localStorage nahi, taaki website aur admin kabhi alag na hon.
+/*
+ * Poora admin data ek jagah. Server hi single source of truth hai — yahan koi
+ * localStorage nahi, taaki website aur admin kabhi alag na hon.
  *
- * Har mutation pehle local state badalti hai (UI turant respond kare), phir
- * server par bhej deti hai.
+ * Pehle har change poora site-data blob overwrite kar deta tha ("last write
+ * wins"), isliye do admin ek saath kaam karte to ek ka change gayab ho jaata.
+ * Ab har action apne resource par jaata hai (PATCH /api/properties/:id/status
+ * waghairah), to sirf wahi cheez badalti hai jo badalni thi.
+ *
+ * Pattern har mutation me same hai: local state turant badlo (UI atke nahi),
+ * server call karo, fail hone par purani state wapas laa kar error dikhao.
  */
 
 const POLL_INTERVAL_MS = 5000;
@@ -26,7 +31,7 @@ type StoreValue = {
   users: User[];
   loading: boolean;
   error: string | null;
-  /** Server par data hi nahi hai — website ek baar khulni chahiye. */
+  /** Server par data hi nahi hai — seed chalana padega. */
   empty: boolean;
   refresh: () => Promise<void>;
 
@@ -36,6 +41,7 @@ type StoreValue = {
   setTestimonialStatus: (id: string, status: Testimonial["status"]) => void;
   removeTestimonial: (id: string) => void;
   setListingStatus: (id: string, status: NonNullable<Property["status"]>) => void;
+  setListingFeatured: (id: string, featured: boolean) => void;
   removeListing: (id: string) => void;
   savePlan: (plan: Plan) => void;
 
@@ -53,18 +59,24 @@ export function StoreProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  /* Apni hi likhi hui state polling se wapas na aa jaaye, iske liye last push
-     ka time yaad rakhte hain. */
+  /* Abhi-abhi ki gayi apni hi change polling se purani state me na badal jaaye,
+     iske liye last write ka time yaad rakhte hain. */
   const lastWriteRef = useRef(0);
 
   const refresh = useCallback(async () => {
     try {
-      const state = await api.getState();
+      const [content, userList] = await Promise.all([api.content(), api.users()]);
       setError(null);
       // 2 sec ke andar humne khud likha ho to server ka jawab ignore karein
       if (Date.now() - lastWriteRef.current < 2000) return;
-      setSiteData(state.siteData);
-      setUsers(state.users ?? []);
+      setSiteData({
+        hero: content.hero,
+        banners: content.banners,
+        testimonials: content.testimonials,
+        listings: content.listings,
+        plans: content.plans,
+      });
+      setUsers(userList.items);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Data load nahi ho paaya.");
     } finally {
@@ -78,26 +90,62 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, [refresh]);
 
-  /** Local state turant badlo, server ko background me bhejo. */
-  const commitUsers = useCallback((next: User[]) => {
-    lastWriteRef.current = Date.now();
-    setUsers(next);
-    api.putUsers(next).catch((err: unknown) => {
-      setError(err instanceof ApiError ? err.message : "Save nahi ho paaya.");
-    });
-  }, []);
-
-  const patch = useCallback((fn: (d: SiteData) => SiteData) => {
-    setSiteData((current) => {
-      if (!current) return current;
-      const next = fn(current);
+  /**
+   * Optimistic mutation.
+   *
+   * Local state turant badalta hai, phir server call jaati hai. Fail hone par
+   * purani state wapas aa jaati hai — warna admin ko lagta rehta ki change save
+   * ho gaya jabki server ne mana kar diya tha.
+   */
+  const mutate = useCallback(
+    <T,>(apply: () => void, revert: () => void, call: () => Promise<T>, fallback: string) => {
       lastWriteRef.current = Date.now();
-      api.putSiteData(next).catch((err: unknown) => {
-        setError(err instanceof ApiError ? err.message : "Save nahi ho paaya.");
-      });
-      return next;
-    });
-  }, []);
+      apply();
+      call()
+        .then(() => setError(null))
+        .catch((err: unknown) => {
+          revert();
+          setError(err instanceof ApiError ? err.message : fallback);
+        });
+    },
+    [],
+  );
+
+  /** SiteData ka ek hissa badalne ka shortcut (revert ke saath). */
+  const patchSite = useCallback(
+    <T,>(apply: (d: SiteData) => SiteData, call: () => Promise<T>, fallback: string) => {
+      let previous: SiteData | null = null;
+      mutate(
+        () =>
+          setSiteData((current) => {
+            if (!current) return current;
+            previous = current;
+            return apply(current);
+          }),
+        () => previous && setSiteData(previous),
+        call,
+        fallback,
+      );
+    },
+    [mutate],
+  );
+
+  const patchUsers = useCallback(
+    <T,>(apply: (list: User[]) => User[], call: () => Promise<T>, fallback: string) => {
+      let previous: User[] = [];
+      mutate(
+        () =>
+          setUsers((current) => {
+            previous = current;
+            return apply(current);
+          }),
+        () => setUsers(previous),
+        call,
+        fallback,
+      );
+    },
+    [mutate],
+  );
 
   const value = useMemo<StoreValue>(
     () => ({
@@ -108,71 +156,122 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       empty: !loading && siteData === null,
       refresh,
 
-      updateHero: (heroPatch) => patch((d) => ({ ...d, hero: { ...d.hero, ...heroPatch } })),
+      updateHero: (heroPatch) =>
+        patchSite(
+          (d) => ({ ...d, hero: { ...d.hero, ...heroPatch } }),
+          () => api.patchHero(heroPatch),
+          "Hero text save nahi hua.",
+        ),
 
       saveBanner: (banner) =>
-        patch((d) => ({
-          ...d,
-          banners: d.banners.some((b) => b.id === banner.id)
-            ? d.banners.map((b) => (b.id === banner.id ? banner : b))
-            : [...d.banners, banner],
-        })),
+        patchSite(
+          (d) => ({
+            ...d,
+            banners: d.banners.some((b) => b.id === banner.id)
+              ? d.banners.map((b) => (b.id === banner.id ? banner : b))
+              : [...d.banners, banner],
+          }),
+          () => api.saveBanner(banner),
+          "Banner save nahi hua.",
+        ),
 
-      removeBanner: (id) => patch((d) => ({ ...d, banners: d.banners.filter((b) => b.id !== id) })),
+      removeBanner: (id) =>
+        patchSite(
+          (d) => ({ ...d, banners: d.banners.filter((b) => b.id !== id) }),
+          () => api.deleteBanner(id),
+          "Banner hat nahi paaya.",
+        ),
 
       setTestimonialStatus: (id, status) =>
-        patch((d) => ({
-          ...d,
-          testimonials: d.testimonials.map((t) => (t.id === id ? { ...t, status } : t)),
-        })),
+        patchSite(
+          (d) => ({
+            ...d,
+            testimonials: d.testimonials.map((t) => (t.id === id ? { ...t, status } : t)),
+          }),
+          () => api.setTestimonialStatus(id, status),
+          "Feedback ka status badal nahi paaya.",
+        ),
 
       removeTestimonial: (id) =>
-        patch((d) => ({ ...d, testimonials: d.testimonials.filter((t) => t.id !== id) })),
+        patchSite(
+          (d) => ({ ...d, testimonials: d.testimonials.filter((t) => t.id !== id) }),
+          () => api.deleteTestimonial(id),
+          "Feedback hat nahi paaya.",
+        ),
 
       setListingStatus: (id, status) =>
-        patch((d) => ({
-          ...d,
-          listings: d.listings.map((p) => (p.id === id ? { ...p, status } : p)),
-        })),
+        patchSite(
+          (d) => ({ ...d, listings: d.listings.map((p) => (p.id === id ? { ...p, status } : p)) }),
+          () => api.setListingStatus(id, status),
+          "Listing ka status badal nahi paaya.",
+        ),
+
+      setListingFeatured: (id, featured) =>
+        patchSite(
+          (d) => ({ ...d, listings: d.listings.map((p) => (p.id === id ? { ...p, featured } : p)) }),
+          () => api.setListingFeatured(id, featured),
+          "Featured tag badal nahi paaya.",
+        ),
 
       removeListing: (id) =>
-        patch((d) => ({ ...d, listings: d.listings.filter((p) => p.id !== id) })),
+        patchSite(
+          (d) => ({ ...d, listings: d.listings.filter((p) => p.id !== id) }),
+          () => api.deleteListing(id),
+          "Listing hat nahi paayi.",
+        ),
 
       savePlan: (plan) =>
-        patch((d) => ({ ...d, plans: d.plans.map((p) => (p.id === plan.id ? plan : p)) })),
+        patchSite(
+          (d) => ({ ...d, plans: d.plans.map((p) => (p.id === plan.id ? plan : p)) }),
+          () => api.savePlan(plan),
+          "Plan save nahi hua.",
+        ),
 
       setUserRole: (userId, role) =>
-        commitUsers(users.map((u) => (u.id === userId ? { ...u, role } : u))),
+        patchUsers(
+          (list) => list.map((u) => (u.id === userId ? { ...u, role } : u)),
+          () => api.setUserRole(userId, role),
+          "Role badal nahi paaya.",
+        ),
 
-      removeUser: (userId) => commitUsers(users.filter((u) => u.id !== userId)),
+      removeUser: (userId) =>
+        patchUsers(
+          (list) => list.filter((u) => u.id !== userId),
+          () => api.deleteUser(userId),
+          "User delete nahi ho paaya.",
+        ),
 
-      /* Plan wahi shape me banate hain jo website purchase par banati hai —
-         warna dono jagah plan alag dikhega. */
+      /* Plan ka snapshot server banata hai (wahi expiry calculate karta hai).
+         Yahan sirf optimistic preview dikhate hain; server ka jawab agle
+         refresh me aa jaata hai. */
       setUserPlan: (userId, planId) => {
         const plan = planId ? siteData?.plans.find((p) => p.id === planId) : null;
         if (planId && !plan) return;
-        commitUsers(
-          users.map((u) =>
-            u.id === userId
-              ? {
-                  ...u,
-                  plan: plan
-                    ? {
-                        id: plan.id,
-                        label: plan.label,
-                        credits: plan.credits,
-                        expiresAt: plan.durationDays
-                          ? Date.now() + plan.durationDays * 86_400_000
-                          : null,
-                      }
-                    : null,
-                }
-              : u,
-          ),
+        patchUsers(
+          (list) =>
+            list.map((u) =>
+              u.id === userId
+                ? {
+                    ...u,
+                    plan: plan
+                      ? {
+                          id: plan.id,
+                          label: plan.label,
+                          credits: plan.credits,
+                          expiresAt: plan.durationDays
+                            ? Date.now() + plan.durationDays * 86_400_000
+                            : null,
+                        }
+                      : null,
+                  }
+                : u,
+            ),
+          () => api.setUserPlan(userId, planId),
+          "Plan set nahi ho paaya.",
         );
       },
     }),
-    [siteData, users, loading, error, refresh, patch, commitUsers],
+    [siteData, users, loading, error, refresh, patchSite, patchUsers],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
