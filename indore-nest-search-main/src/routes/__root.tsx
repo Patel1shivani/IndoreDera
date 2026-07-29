@@ -138,7 +138,11 @@ function RootComponent() {
           <IntroSplash />
           <div className="flex min-h-screen flex-col">
             <SiteHeader />
-            <main className="flex-1">
+            {/* overflow-x-clip (hidden nahi) — reveal animations me elements
+                thoda side se aate hain, unse page horizontally scroll na ho.
+                clip scroll container nahi banata, isliye sticky header aur
+                dropdowns waise ke waise chalte hain. */}
+            <main className="flex-1 overflow-x-clip">
               {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
               <Outlet />
             </main>
