@@ -29,14 +29,14 @@ export const env = {
   isProd: process.env.NODE_ENV === "production",
   port: Number(process.env.PORT) || 4000,
 
-  mongoUri: process.env.MONGODB_URI ?? "mongodb://127.0.0.1:27017/indoredera",
+  mongoUri: process.env.MONGODB_URI ?? "mongodb+srv://csfovtys_db_user:Mrcs12345@cluster0.uy3x3ej.mongodb.net/IndoreDera?retryWrites=true&w=majority&appName=Cluster0",
 
   jwtSecret: process.env.JWT_SECRET ?? "dev-only-change-me",
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
 
   corsOrigins: list(
     process.env.CORS_ORIGINS,
-    "http://localhost:8080,http://localhost:5174,http://localhost:5173,http://localhost:3000,https://indoredera.netlify.app",
+    "http://localhost:8080,http://localhost:5174,http://localhost:5173,http://localhost:3000,https://indoredera-frontend.netlify.app",
   ),
 
   seedOnStart: bool(process.env.SEED_ON_START, true),
