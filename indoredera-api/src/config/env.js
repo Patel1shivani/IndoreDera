@@ -36,7 +36,7 @@ export const env = {
 
   corsOrigins: list(
     process.env.CORS_ORIGINS,
-    "http://localhost:8080,http://localhost:5174,http://localhost:5173,http://localhost:3000",
+    "http://localhost:8080,http://localhost:5174,http://localhost:5173,http://localhost:3000,https://indoredera.netlify.app",
   ),
 
   seedOnStart: bool(process.env.SEED_ON_START, true),
