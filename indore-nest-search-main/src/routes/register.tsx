@@ -2,6 +2,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
   GoAlertFill,
+  GoCheck,
   GoDeviceMobile,
   GoEye,
   GoEyeClosed,
@@ -10,8 +11,30 @@ import {
   GoMail,
   GoPerson,
   GoPersonAdd,
+  GoSearch,
+  GoTag,
+  GoZap,
 } from "react-icons/go";
+import { AuthLayout, type AuthPoint } from "@/components/auth-layout";
 import { useAuth } from "@/lib/auth";
+
+const points: AuthPoint[] = [
+  {
+    icon: GoSearch,
+    title: "Poora Indore ek search me",
+    text: "Flat, room, dukaan, PG aur zameen — sab listings khul jaati hain.",
+  },
+  {
+    icon: GoTag,
+    title: "Bilkul free",
+    text: "Na registration fee, na brokerage. Pehli listing bhi free.",
+  },
+  {
+    icon: GoZap,
+    title: "24 ghante me approval",
+    text: "Property daali ho to admin verify karke jaldi live kar dete hain.",
+  },
+];
 
 export const Route = createFileRoute("/register")({
   head: () => ({
@@ -56,6 +79,8 @@ function RegisterPage() {
     if (ready && user) navigate({ to: redirect ?? "/", replace: true });
   }, [ready, user, redirect, navigate]);
 
+  const confirmState = !form.confirm ? null : form.confirm === form.password ? "match" : "mismatch";
+
   function set<K extends keyof typeof form>(key: K) {
     return (e: React.ChangeEvent<HTMLInputElement>) =>
       setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -90,17 +115,13 @@ function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-14">
-      <h1 className="text-3xl tracking-wide sm:text-4xl">Free account banayein</h1>
-      <p className="mt-2 text-muted-foreground">
-        Ek baar register karein — properties save karein aur owner se seedha judein. Koi brokerage
-        nahi.
-      </p>
-
-      <form
-        className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-6 shadow-soft"
-        onSubmit={handleSubmit}
-      >
+    <AuthLayout
+      badge="Free register"
+      title="Free account banayein"
+      subtitle="Ek baar register karein — properties dekhein aur owner se seedha judein. Koi brokerage nahi."
+      points={points}
+    >
+      <form className="grid gap-4" onSubmit={handleSubmit}>
         {error && (
           <p
             role="alert"
@@ -176,49 +197,53 @@ function RegisterPage() {
           </div>
         </div>
 
-        <div>
-          <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
-            Mobile number
-          </label>
-          <div className="relative">
-            <GoDeviceMobile
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              id="phone"
-              name="phone"
-              required
-              type="tel"
-              autoComplete="tel"
-              className="field pl-11"
-              placeholder="8962504009"
-              value={form.phone}
-              onChange={set("phone")}
-            />
+        {/* Card ab chaudi hai, isliye chhote fields do-do karke — form
+            chhota dikhta hai aur scroll kam hota hai. */}
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div>
+            <label htmlFor="phone" className="mb-1.5 block text-sm font-medium">
+              Mobile number
+            </label>
+            <div className="relative">
+              <GoDeviceMobile
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                id="phone"
+                name="phone"
+                required
+                type="tel"
+                autoComplete="tel"
+                className="field pl-11"
+                placeholder="8962504009"
+                value={form.phone}
+                onChange={set("phone")}
+              />
+            </div>
           </div>
-        </div>
 
-        <div>
-          <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
-            Email
-          </label>
-          <div className="relative">
-            <GoMail
-              aria-hidden="true"
-              className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-            />
-            <input
-              id="email"
-              name="email"
-              required
-              type="email"
-              autoComplete="email"
-              className="field pl-11"
-              placeholder="rakesh@gmail.com"
-              value={form.email}
-              onChange={set("email")}
-            />
+          <div>
+            <label htmlFor="email" className="mb-1.5 block text-sm font-medium">
+              Email
+            </label>
+            <div className="relative">
+              <GoMail
+                aria-hidden="true"
+                className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+              />
+              <input
+                id="email"
+                name="email"
+                required
+                type="email"
+                autoComplete="email"
+                className="field pl-11"
+                placeholder="rakesh@gmail.com"
+                value={form.email}
+                onChange={set("email")}
+              />
+            </div>
           </div>
         </div>
 
@@ -276,14 +301,46 @@ function RegisterPage() {
               onChange={set("confirm")}
             />
           </div>
+          {/* Submit karne par hi pata chalta tha ki password match nahi hua —
+              ab likhte-likhte dikh jaata hai. */}
+          {confirmState && (
+            <p
+              className={`mt-1.5 flex items-center gap-1.5 text-xs ${
+                confirmState === "match" ? "text-brand-green" : "text-destructive"
+              }`}
+            >
+              {confirmState === "match" ? (
+                <GoCheck aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              ) : (
+                <GoAlertFill aria-hidden="true" className="h-3.5 w-3.5 shrink-0" />
+              )}
+              {confirmState === "match" ? "Password match ho gaya" : "Dono password alag hain"}
+            </p>
+          )}
         </div>
 
-        <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn-primary mt-2 w-full disabled:opacity-60"
+        >
           <GoPersonAdd aria-hidden="true" className="h-4 w-4" />
           {busy ? "Account ban raha hai..." : "Account banayein"}
         </button>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-xs text-muted-foreground">
+          Account banate hi aap hamari{" "}
+          <Link to="/terms" className="text-primary hover:underline">
+            Terms
+          </Link>{" "}
+          aur{" "}
+          <Link to="/privacy" className="text-primary hover:underline">
+            Privacy Policy
+          </Link>{" "}
+          se sehmat hote hain.
+        </p>
+
+        <p className="border-t border-border pt-4 text-center text-sm text-muted-foreground">
           Pehle se account hai?{" "}
           <Link
             to="/login"
@@ -294,6 +351,6 @@ function RegisterPage() {
           </Link>
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

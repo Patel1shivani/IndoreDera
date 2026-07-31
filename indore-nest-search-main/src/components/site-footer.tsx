@@ -10,6 +10,7 @@ import {
   GoShieldCheck,
 } from "react-icons/go";
 import logo from "../assets/logo.png";
+import { mainNav } from "@/lib/nav";
 import { propertyTypes } from "@/lib/properties";
 
 /* Company column ke links — har link ka apna Octicon. */
@@ -29,12 +30,26 @@ const legalLinks = [
 export function SiteFooter() {
   return (
     <footer className="mt-20 border-t-4 border-accent bg-primary text-primary-foreground">
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <img src={logo} alt="Indore Dera" className="h-36 w-36 object-contain" />
           <p className="-mt-8 text-sm text-primary-foreground/80">
             Indore ka apna rental platform — flats, rooms, shops, PG aur zameen, sab ek jagah.
           </p>
+        </div>
+        {/* Wahi menu jo header aur mobile drawer me hai — @/lib/nav se aata hai. */}
+        <div>
+          <h3 className="font-display text-lg tracking-wide">Menu</h3>
+          <ul className="mt-3 space-y-2 text-sm text-primary-foreground/80">
+            {mainNav.map((item) => (
+              <li key={item.to}>
+                <Link to={item.to} className="flex items-center gap-2 hover:text-accent">
+                  <item.icon aria-hidden="true" className="h-4 w-4 shrink-0" />
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
         <div>
           <h3 className="font-display text-lg tracking-wide">Categories</h3>

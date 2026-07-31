@@ -1,7 +1,36 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { GoAlertFill, GoEye, GoEyeClosed, GoKey, GoPerson, GoSignIn } from "react-icons/go";
+import {
+  GoAlertFill,
+  GoCommentDiscussion,
+  GoEye,
+  GoEyeClosed,
+  GoKey,
+  GoPerson,
+  GoProject,
+  GoSignIn,
+  GoTag,
+} from "react-icons/go";
+import { AuthLayout, type AuthPoint } from "@/components/auth-layout";
 import { useAuth } from "@/lib/auth";
+
+const points: AuthPoint[] = [
+  {
+    icon: GoTag,
+    title: "Zero brokerage",
+    text: "Kirayedaar ko ek rupaya commission nahi deni padti.",
+  },
+  {
+    icon: GoCommentDiscussion,
+    title: "Seedha owner se baat",
+    text: "Call ya WhatsApp — beech me koi agent nahi.",
+  },
+  {
+    icon: GoProject,
+    title: "Apni listings ek jagah",
+    text: "Dashboard se apni property edit ya hata sakte hain.",
+  },
+];
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -55,16 +84,13 @@ function LoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-md px-4 py-14">
-      <h1 className="text-3xl tracking-wide sm:text-4xl">Wapas swagat hai</h1>
-      <p className="mt-2 text-muted-foreground">
-        Apne Indore Dera account me login karke listings aur enquiries manage karein.
-      </p>
-
-      <form
-        className="mt-8 grid gap-4 rounded-2xl border border-border bg-card p-6 shadow-soft"
-        onSubmit={handleSubmit}
-      >
+    <AuthLayout
+      badge="Login"
+      title="Wapas swagat hai"
+      subtitle="Apne Indore Dera account me login karke listings aur enquiries manage karein."
+      points={points}
+    >
+      <form className="grid gap-4" onSubmit={handleSubmit}>
         {error && (
           <p
             role="alert"
@@ -128,12 +154,16 @@ function LoginPage() {
           </div>
         </div>
 
-        <button type="submit" disabled={busy} className="btn-primary w-full disabled:opacity-60">
+        <button
+          type="submit"
+          disabled={busy}
+          className="btn-primary mt-2 w-full disabled:opacity-60"
+        >
           <GoSignIn aria-hidden="true" className="h-4 w-4" />
           {busy ? "Login ho raha hai..." : "Login karein"}
         </button>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="border-t border-border pt-4 text-center text-sm text-muted-foreground">
           Naya account chahiye?{" "}
           <Link
             to="/register"
@@ -144,6 +174,6 @@ function LoginPage() {
           </Link>
         </p>
       </form>
-    </div>
+    </AuthLayout>
   );
 }

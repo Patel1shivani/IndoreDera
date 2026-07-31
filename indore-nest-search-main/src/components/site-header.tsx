@@ -11,15 +11,9 @@ import {
 } from "react-icons/go";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
+import { mainNav } from "@/lib/nav";
 import { useSiteData } from "@/lib/site-data";
 import logo from "../assets/logo.png";
-
-const nav = [
-  { to: "/", label: "Home" },
-  { to: "/properties", label: "Sab dekho" },
-  { to: "/about", label: "About" },
-  { to: "/contact", label: "Contact" },
-];
 
 /* Plain text links — active hone par sirf rang badalta hai aur niche patli line
    aati hai. Pehle har link ek pill tha, isliye header box-box lag raha tha. */
@@ -67,13 +61,14 @@ export function SiteHeader() {
         </Link>
 
         <nav className="ml-6 hidden items-center gap-6 md:flex">
-          {nav.map((item) => (
+          {mainNav.map((item) => (
             <Link
               key={item.to}
               to={item.to}
-              className={navLinkClass}
+              className={`${navLinkClass} inline-flex items-center gap-1.5`}
               activeOptions={{ exact: item.to === "/" }}
             >
+              <item.icon aria-hidden="true" className="h-4 w-4 shrink-0" />
               {item.label}
             </Link>
           ))}
@@ -163,20 +158,9 @@ export function SiteHeader() {
             />
           </form>
 
-          <nav className="mt-4 flex flex-col">
-            {nav.map((item) => (
-              <Link
-                key={item.to}
-                to={item.to}
-                onClick={() => setOpen(false)}
-                className="rounded-lg px-3 py-2.5 text-sm font-medium text-foreground/80 hover:bg-secondary hover:text-primary [&.active]:text-primary"
-                activeOptions={{ exact: item.to === "/" }}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-
+          {/* Home / Sab dekho / About / Contact yahan se hata diye — wahi links
+              ab niche wale mobile tab bar me hain. Drawer sirf search aur
+              account ke liye hai. */}
           <div className="mt-4 border-t border-border pt-4">
             {ready &&
               (user ? (
@@ -229,15 +213,8 @@ export function SiteHeader() {
                   </Link>
                 </div>
               ))}
-
-            <Link
-              to="/list-property"
-              onClick={() => setOpen(false)}
-              className="btn-primary mt-3 w-full"
-            >
-              <GoPlus aria-hidden="true" className="h-4 w-4" />
-              List Your Property
-            </Link>
+            {/* "List Your Property" bhi hata diya — tab bar ke beech wala
+                uthaya hua button ab wahi kaam karta hai. */}
           </div>
         </div>
       )}

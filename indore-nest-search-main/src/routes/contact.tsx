@@ -85,7 +85,7 @@ function Contact() {
               <label htmlFor="cphone" className="mb-1.5 block text-sm font-medium">
                 Mobile / Email
               </label>
-              <input id="cphone" required className="field" placeholder="8962504009" />
+              <input id="cphone" required className="field" placeholder="Aapka mobile number " />
             </div>
             <div>
               <label htmlFor="cmsg" className="mb-1.5 block text-sm font-medium">

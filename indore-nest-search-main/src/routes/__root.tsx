@@ -15,6 +15,7 @@ import { AuthProvider } from "@/lib/auth";
 import { SiteDataProvider } from "@/lib/site-data";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
+import { MobileTabBar } from "@/components/mobile-tab-bar";
 import { IntroSplash } from "@/components/intro-splash";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -136,7 +137,9 @@ function RootComponent() {
         <SiteDataProvider>
           {/* Pehli baar site khulne par sitare wala intro */}
           <IntroSplash />
-          <div className="flex min-h-screen flex-col">
+          {/* pb-20: mobile par niche fixed tab bar hai, uske peeche content
+              chhup na jaye. Desktop par bar nahi hai to padding bhi nahi. */}
+          <div className="flex min-h-screen flex-col pb-20 md:pb-0">
             <SiteHeader />
             {/* overflow-x-clip (hidden nahi) — reveal animations me elements
                 thoda side se aate hain, unse page horizontally scroll na ho.
@@ -148,6 +151,7 @@ function RootComponent() {
             </main>
             <SiteFooter />
           </div>
+          <MobileTabBar />
           {/* Alerts right side me — center me nahi, taaki content block na ho.
               richColors jaan-boojh kar band hai: styling styles.css se aati hai. */}
           <Toaster position="top-right" closeButton />
