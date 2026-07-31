@@ -9,7 +9,9 @@ import type { Banner, HeroContent, Plan, Property, Testimonial, User } from "./t
  */
 
 export const API_BASE =
- Backend nahi chal raha
+  (import.meta.env.VITE_API_BASE as string | undefined) ??
+  "https://indoredera-api.onrender.com";
+
 const TOKEN_KEY = "indoredera-admin:token";
 
 export class ApiError extends Error {
@@ -55,8 +57,7 @@ async function request<T>(
   } catch {
     throw new ApiError(
       0,
-      `Data server (${API_BASE}) se connect nahi ho paaya. ` +
-        `indoredera-api folder me "npm run dev" chala hai kya?`,
+      `Data server (${API_BASE}) se connect nahi ho paaya.`,
     );
   }
 
@@ -64,15 +65,16 @@ async function request<T>(
   try {
     payload = await res.json();
   } catch {
-    /* khaali ya non-JSON body */
+    /* empty body */
   }
 
   if (!res.ok) {
     const message =
       (payload as { error?: { message?: string } })?.error?.message ??
       `Server ne ${res.status} ${res.statusText} bheja`;
-    // token expire/invalid — rakhna bekaar hai, agli request bhi 401 hi degi
+
     if (res.status === 401) setToken(null);
+
     throw new ApiError(res.status, message);
   }
 
@@ -101,54 +103,93 @@ export const api = {
 
   me: () => request<{ user: User }>("/api/auth/me"),
 
-  logout: () => request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
+  logout: () =>
+    request<{ ok: boolean }>("/api/auth/logout", { method: "POST" }),
 
-  /** Admin token ke saath ye sab kuch deta hai — pending listings/feedback samet. */
   content: () => request<SiteContent>("/api/content"),
 
   users: () => request<{ items: User[] }>("/api/users"),
 
   patchHero: (patch: Partial<HeroContent>) =>
-    request<{ hero: HeroContent }>("/api/content/hero", { method: "PATCH", body: patch }),
+    request<{ hero: HeroContent }>("/api/content/hero", {
+      method: "PATCH",
+      body: patch,
+    }),
 
   saveBanner: (banner: Banner) =>
-    request<{ banner: Banner }>(`/api/banners/${banner.id}`, { method: "PUT", body: banner }),
+    request<{ banner: Banner }>(`/api/banners/${banner.id}`, {
+      method: "PUT",
+      body: banner,
+    }),
 
-  deleteBanner: (id: string) => request<{ ok: boolean }>(`/api/banners/${id}`, { method: "DELETE" }),
+  deleteBanner: (id: string) =>
+    request<{ ok: boolean }>(`/api/banners/${id}`, {
+      method: "DELETE",
+    }),
 
   setTestimonialStatus: (id: string, status: Testimonial["status"]) =>
-    request<{ testimonial: Testimonial }>(`/api/testimonials/${id}/status`, {
-      method: "PATCH",
-      body: { status },
-    }),
+    request<{ testimonial: Testimonial }>(
+      `/api/testimonials/${id}/status`,
+      {
+        method: "PATCH",
+        body: { status },
+      },
+    ),
 
   deleteTestimonial: (id: string) =>
-    request<{ ok: boolean }>(`/api/testimonials/${id}`, { method: "DELETE" }),
-
-  setListingStatus: (id: string, status: NonNullable<Property["status"]>) =>
-    request<{ property: Property }>(`/api/properties/${id}/status`, {
-      method: "PATCH",
-      body: { status },
+    request<{ ok: boolean }>(`/api/testimonials/${id}`, {
+      method: "DELETE",
     }),
+
+  setListingStatus: (
+    id: string,
+    status: NonNullable<Property["status"]>,
+  ) =>
+    request<{ property: Property }>(
+      `/api/properties/${id}/status`,
+      {
+        method: "PATCH",
+        body: { status },
+      },
+    ),
 
   setListingFeatured: (id: string, featured: boolean) =>
-    request<{ property: Property }>(`/api/properties/${id}/featured`, {
-      method: "PATCH",
-      body: { featured },
-    }),
+    request<{ property: Property }>(
+      `/api/properties/${id}/featured`,
+      {
+        method: "PATCH",
+        body: { featured },
+      },
+    ),
 
   deleteListing: (id: string) =>
-    request<{ ok: boolean }>(`/api/properties/${id}`, { method: "DELETE" }),
+    request<{ ok: boolean }>(`/api/properties/${id}`, {
+      method: "DELETE",
+    }),
 
   savePlan: (plan: Plan) =>
-    request<{ plan: Plan }>(`/api/plans/${plan.id}`, { method: "PUT", body: plan }),
+    request<{ plan: Plan }>(`/api/plans/${plan.id}`, {
+      method: "PUT",
+      body: plan,
+    }),
 
   setUserRole: (id: string, role: User["role"]) =>
-    request<{ user: User }>(`/api/users/${id}/role`, { method: "PATCH", body: { role } }),
+    request<{ user: User }>(`/api/users/${id}/role`, {
+      method: "PATCH",
+      body: { role },
+    }),
 
   setUserPlan: (id: string, planId: string | null) =>
-    request<{ user: User }>(`/api/users/${id}/plan`, { method: "PATCH", body: { planId } }),
+    request<{ user: User }>(`/api/users/${id}/plan`, {
+      method: "PATCH",
+      body: { planId },
+    }),
 
   deleteUser: (id: string) =>
-    request<{ ok: boolean; deletedListings: number }>(`/api/users/${id}`, { method: "DELETE" }),
+    request<{ ok: boolean; deletedListings: number }>(
+      `/api/users/${id}`,
+      {
+        method: "DELETE",
+      },
+    ),
 };
