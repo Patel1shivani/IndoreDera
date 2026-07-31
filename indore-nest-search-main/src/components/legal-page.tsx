@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { GoLaw } from "react-icons/go";
+import type { LegalDoc } from "@/lib/site-data";
 
 /**
  * Privacy Policy aur Terms — dono ka ek jaisa layout, taaki styling
@@ -22,9 +23,11 @@ export function LegalPage({
       <div className="animate-rise-in text-center">
         <GoLaw aria-hidden="true" className="mx-auto h-9 w-9 text-primary" />
         <h1 className="mt-3 text-3xl tracking-wide sm:text-4xl">{title}</h1>
-        <p className="mt-2 text-xs tracking-wide text-muted-foreground uppercase">
-          Last updated: {updated}
-        </p>
+        {updated && (
+          <p className="mt-2 text-xs tracking-wide text-muted-foreground uppercase">
+            Last updated: {updated}
+          </p>
+        )}
         <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">{intro}</p>
       </div>
 
@@ -53,6 +56,27 @@ export function LegalSection({
         {children}
       </div>
     </section>
+  );
+}
+
+/**
+ * Poora legal document — Privacy aur Terms dono isi se bante hain.
+ *
+ * Content admin panel se aata hai, isliye clause ka title, paragraph aur
+ * bullets teeno optional hain: jo khaali hai wo render hi nahi hota. Numbering
+ * list ke kram se banti hai, database me store nahi hoti — clause upar-neeche
+ * karne par numbers apne aap theek ho jaate hain.
+ */
+export function LegalDocView({ doc }: { doc: LegalDoc }) {
+  return (
+    <LegalPage title={doc.title} updated={doc.updated} intro={doc.intro}>
+      {doc.sections.map((section, i) => (
+        <LegalSection key={`${i}-${section.title}`} n={i + 1} title={section.title}>
+          {section.items.length > 0 && <LegalList items={section.items} />}
+          {section.body && <p>{section.body}</p>}
+        </LegalSection>
+      ))}
+    </LegalPage>
   );
 }
 

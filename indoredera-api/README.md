@@ -65,15 +65,34 @@ kuch reset nahi karna padta.
 
 | method | path | access |
 |---|---|---|
-| GET | `/` | public — hero + banners + testimonials + listings + plans, ek call me |
+| GET | `/` | public — saara site text + banners + testimonials + listings + plans, ek call me |
 | GET | `/hero` | public |
 | PATCH | `/hero` | admin |
+| GET | `/contact` | public |
+| PATCH | `/contact` | admin |
+| GET | `/about` | public |
+| PATCH | `/about` | admin |
+| GET | `/home` | public |
+| PATCH | `/home` | admin |
+| GET | `/legal/:page` | public — `page` = `privacy` ya `terms` |
+| PATCH | `/legal/:page` | admin |
 
 `GET /api/content` ka jawab caller ke hisaab se badalta hai:
 
 - guest/tenant — approved listings, approved feedback, active banners
 - owner — upar wala + apni saari listings (draft/pending samet)
 - admin — sab kuch
+
+**Website ka text kahan rehta hai.** About, Contact, Privacy, Terms, home page
+ke sections aur FAQ — sab `SiteContent` singleton ke andar hain (ek hi document,
+`key: "site"`). Pehle ye sab website ke code me hard-coded tha; ab admin panel
+se badalta hai. Har section ka apna PATCH hai taaki do admin ek saath alag-alag
+page edit karein to ek doosre ka kaam na mite.
+
+PATCH partial hota hai — jo field bheji sirf wahi badalti hai. Arrays iska
+apwaad hain: wo poori replace hoti hain (warna "teesra bullet hata do" bheja hi
+nahi ja sakta). Defaults model me hain, isliye purane database me ye sections
+pehli request par apne aap bhar jaate hain — koi migration nahi chalani padti.
 
 ### Listings — `/api/properties`
 

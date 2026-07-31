@@ -8,7 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { api, ApiError, onTokenChange } from "./api-client";
+import { api, API_BASE, ApiError, onTokenChange } from "./api-client";
 import type { Property } from "./properties";
 
 /*
@@ -36,6 +36,98 @@ export interface HeroContent {
   /** Logged-out visitors ko dikhne wala gate. */
   lockedTitle: string;
   lockedSubtitle: string;
+}
+
+/* ---------------------------------------------------- baaki pages ka text */
+
+/*
+ * About, Contact, Home ke sections aur legal pages ka text.
+ *
+ * Ye sab pehle in files me hard-coded tha, isliye ek shabd badalne ke liye
+ * bhi deploy karna padta tha. Ab backend se aata hai aur admin panel se badla
+ * ja sakta hai — shape backend ke site-content.model.js se match karta hai.
+ */
+
+/** Icon + title + description — steps, values aur why-points sab isi shape me. */
+export interface Blurb {
+  icon: string;
+  t: string;
+  d: string;
+}
+
+export interface Faq {
+  q: string;
+  a: string;
+}
+
+/** Legal page ka ek numbered clause — paragraph aur/ya bullet list. */
+export interface LegalClause {
+  title: string;
+  body: string;
+  items: string[];
+}
+
+export interface LegalDoc {
+  title: string;
+  updated: string;
+  intro: string;
+  sections: LegalClause[];
+}
+
+export interface ContactContent {
+  heading: string;
+  subheading: string;
+  address: string;
+  phone: string;
+  email: string;
+  timings: string;
+  sentTitle: string;
+  sentText: string;
+  footerTagline: string;
+}
+
+export interface AboutContent {
+  badge: string;
+  title: string;
+  intro: string;
+  bullets: string[];
+  meaningTitle: string;
+  meaningBody: string;
+  weAreTitle: string;
+  weAre: string[];
+  weAreNotTitle: string;
+  weAreNot: string[];
+  howTitle: string;
+  howSubtitle: string;
+  tenantTitle: string;
+  tenantSteps: Blurb[];
+  ownerTitle: string;
+  ownerSteps: Blurb[];
+  typesTitle: string;
+  localitiesSubtitle: string;
+  valuesTitle: string;
+  values: Blurb[];
+  ctaTitle: string;
+  ctaText: string;
+  helpTitle: string;
+  helpText: string;
+}
+
+export interface HomeContent {
+  whyTitle: string;
+  whySubtitle: string;
+  whyPoints: Blurb[];
+  stepsTitle: string;
+  stepsSubtitle: string;
+  steps: Blurb[];
+  faqTitle: string;
+  faqSubtitle: string;
+  faqs: Faq[];
+}
+
+export interface LegalContent {
+  privacy: LegalDoc;
+  terms: LegalDoc;
 }
 
 export interface Banner {
@@ -73,6 +165,10 @@ export interface Plan {
 
 export interface SiteData {
   hero: HeroContent;
+  contact: ContactContent;
+  about: AboutContent;
+  home: HomeContent;
+  legal: LegalContent;
   banners: Banner[];
   testimonials: Testimonial[];
   listings: Property[];
@@ -98,8 +194,65 @@ const emptyHero: HeroContent = {
   lockedSubtitle: "",
 };
 
+const emptyContact: ContactContent = {
+  heading: "",
+  subheading: "",
+  address: "",
+  phone: "",
+  email: "",
+  timings: "",
+  sentTitle: "",
+  sentText: "",
+  footerTagline: "",
+};
+
+const emptyAbout: AboutContent = {
+  badge: "",
+  title: "",
+  intro: "",
+  bullets: [],
+  meaningTitle: "",
+  meaningBody: "",
+  weAreTitle: "",
+  weAre: [],
+  weAreNotTitle: "",
+  weAreNot: [],
+  howTitle: "",
+  howSubtitle: "",
+  tenantTitle: "",
+  tenantSteps: [],
+  ownerTitle: "",
+  ownerSteps: [],
+  typesTitle: "",
+  localitiesSubtitle: "",
+  valuesTitle: "",
+  values: [],
+  ctaTitle: "",
+  ctaText: "",
+  helpTitle: "",
+  helpText: "",
+};
+
+const emptyHome: HomeContent = {
+  whyTitle: "",
+  whySubtitle: "",
+  whyPoints: [],
+  stepsTitle: "",
+  stepsSubtitle: "",
+  steps: [],
+  faqTitle: "",
+  faqSubtitle: "",
+  faqs: [],
+};
+
+const emptyLegalDoc: LegalDoc = { title: "", updated: "", intro: "", sections: [] };
+
 const emptySiteData: SiteData = {
   hero: emptyHero,
+  contact: emptyContact,
+  about: emptyAbout,
+  home: emptyHome,
+  legal: { privacy: emptyLegalDoc, terms: emptyLegalDoc },
   banners: [],
   testimonials: [],
   listings: [],
@@ -107,6 +260,49 @@ const emptySiteData: SiteData = {
 };
 
 type ContentResponse = SiteData & { updatedAt: number };
+
+/**
+ * Server ka jawab → SiteData.
+ *
+ * Har section me spread isliye hai ki purana backend (jisme koi naya field
+ * abhi aaya hi nahi) bhejta hai to bhi UI undefined par na toote.
+ */
+function mergeContent(content?: Partial<ContentResponse> | null): SiteData {
+  if (!content) return emptySiteData;
+  return {
+    hero: { ...emptyHero, ...content.hero },
+    contact: { ...emptyContact, ...content.contact },
+    about: { ...emptyAbout, ...content.about },
+    home: { ...emptyHome, ...content.home },
+    legal: {
+      privacy: { ...emptyLegalDoc, ...content.legal?.privacy },
+      terms: { ...emptyLegalDoc, ...content.legal?.terms },
+    },
+    banners: content.banners ?? [],
+    testimonials: content.testimonials ?? [],
+    listings: content.listings ?? [],
+    plans: content.plans ?? [],
+  };
+}
+
+/**
+ * Server par (SSR ke waqt) site content laata hai.
+ *
+ * Root route ka loader ise chalata hai taaki About/Privacy/Terms ka text pehle
+ * HTML me hi aa jaaye — warna wo pages crawler ko khaali dikhte. Yahan
+ * api-client use nahi karte kyunki wo localStorage se token padhta hai, jo
+ * server par hota hi nahi. Fail hone par null — page phir bhi khulta hai aur
+ * client mount hote hi dobara maang leta hai.
+ */
+export async function fetchSiteContent(): Promise<ContentResponse | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/content`);
+    if (!res.ok) return null;
+    return (await res.json()) as ContentResponse;
+  } catch {
+    return null;
+  }
+}
 
 type SiteDataContextValue = {
   data: SiteData;
@@ -132,8 +328,15 @@ export type NewListing = Omit<
 
 const SiteDataContext = createContext<SiteDataContextValue | null>(null);
 
-export function SiteDataProvider({ children }: { children: ReactNode }) {
-  const [data, setData] = useState<SiteData>(emptySiteData);
+export function SiteDataProvider({
+  children,
+  initial,
+}: {
+  children: ReactNode;
+  /** SSR loader ka data — pehla render isi se hota hai. */
+  initial?: ContentResponse | null;
+}) {
+  const [data, setData] = useState<SiteData>(() => mergeContent(initial));
   const [ready, setReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -145,13 +348,7 @@ export function SiteDataProvider({ children }: { children: ReactNode }) {
     loadingRef.current = true;
     try {
       const content = await api.get<ContentResponse>("/api/content");
-      setData({
-        hero: { ...emptyHero, ...content.hero },
-        banners: content.banners ?? [],
-        testimonials: content.testimonials ?? [],
-        listings: content.listings ?? [],
-        plans: content.plans ?? [],
-      });
+      setData(mergeContent(content));
       setError(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Content load nahi ho paaya.");

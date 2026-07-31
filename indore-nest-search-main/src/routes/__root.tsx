@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AuthProvider } from "@/lib/auth";
-import { SiteDataProvider } from "@/lib/site-data";
+import { fetchSiteContent, SiteDataProvider } from "@/lib/site-data";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { MobileTabBar } from "@/components/mobile-tab-bar";
@@ -105,6 +105,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "icon", href: "/favicon.webp", type: "image/webp" },
     ],
   }),
+  /* Site ka text (hero, about, legal, FAQ) server par hi le aate hain, taaki
+     wo pehle HTML me maujood ho — warna About/Privacy/Terms crawler ko khaali
+     dikhte, kyunki data client par mount hone ke baad aata hai.
+
+     Loader ke paas user ka token nahi hota (wo localStorage me hai), isliye ye
+     hamesha guest wala view hai; login ke hisaab se badalne wala hissa client
+     par SiteDataProvider dobara maang leta hai. Isi wajah se staleTime Infinity
+     hai — har navigation par dobara fetch karne ka koi fayda nahi. */
+  loader: () => fetchSiteContent(),
+  staleTime: Number.POSITIVE_INFINITY,
   shellComponent: RootShell,
   component: RootComponent,
   notFoundComponent: NotFoundComponent,
@@ -127,6 +137,7 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const content = Route.useLoaderData();
 
   return (
     <QueryClientProvider client={queryClient}>
@@ -134,7 +145,7 @@ function RootComponent() {
           hai (owner ko apni draft/pending listings dikhni chahiye), isliye
           SiteDataProvider ko session ke andar rehna chahiye. */}
       <AuthProvider>
-        <SiteDataProvider>
+        <SiteDataProvider initial={content}>
           {/* Pehli baar site khulne par sitare wala intro */}
           <IntroSplash />
           {/* pb-20: mobile par niche fixed tab bar hai, uske peeche content

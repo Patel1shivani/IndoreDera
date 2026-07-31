@@ -95,7 +95,7 @@ export function Layout({
   const sidebarInner = (
     <>
       <SidebarBrand />
-      <div className="mt-6 flex-1 overflow-y-auto">{nav}</div>
+      <div className="mt-6 min-h-0 flex-1 overflow-y-auto">{nav}</div>
       <SidebarFooter siteUrl={SITE_URL} apiBase={API_BASE} />
     </>
   );
@@ -104,8 +104,11 @@ export function Layout({
      tha aur uspar sidebar text ghul jaata tha. */
   const sidebarBg = "bg-gradient-to-b from-[#540404] to-[#e0baba]";
 
+  /* Page khud scroll nahi hota — screen ki poori height lock hai aur uske andar
+     sidebar aur content apna-apna scroll chalate hain. Isse content neeche
+     scroll karne par sidebar upar nahi khisakta. */
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="flex h-screen overflow-hidden">
       <aside className={`hidden w-64 shrink-0 flex-col px-4 py-5 lg:flex ${sidebarBg}`}>
         {sidebarInner}
       </aside>
@@ -125,7 +128,7 @@ export function Layout({
         </div>
       )}
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col overflow-y-auto">
         <header className="sticky top-0 z-30 border-b border-line bg-panel/85 backdrop-blur">
           <div className="flex h-16 items-center gap-3 px-4 sm:px-6">
             <button

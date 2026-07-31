@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { asyncHandler } from "../lib/async-handler.js";
+import { ApiError } from "../lib/api-error.js";
 import { optionalAuth, requireAdmin, requireAuth } from "../middleware/auth.js";
 import { validateBody } from "../middleware/validate.js";
 import { Banner } from "../models/banner.model.js";
@@ -7,13 +8,20 @@ import { Plan } from "../models/plan.model.js";
 import { Property } from "../models/property.model.js";
 import { SiteContent } from "../models/site-content.model.js";
 import { Testimonial } from "../models/testimonial.model.js";
-import { heroPatchSchema } from "../validators/schemas.js";
+import {
+  aboutPatchSchema,
+  contactPatchSchema,
+  heroPatchSchema,
+  homePatchSchema,
+  legalPageParam,
+  legalPatchSchema,
+} from "../validators/schemas.js";
 
 const router = Router();
 
 /**
- * Website ka pehla load — hero, banners, testimonials, listings aur plans ek
- * hi request me. Alag-alag endpoints bhi hain, par home page ko sab kuch ek
+ * Website ka pehla load — site text, banners, testimonials, listings aur plans
+ * ek hi request me. Alag-alag endpoints bhi hain, par home page ko sab kuch ek
  * saath chahiye hota hai aur 5 round-trips waterfall bana dete hain.
  *
  * Jawab caller ke hisaab se badalta hai:
@@ -44,6 +52,10 @@ router.get(
 
     res.json({
       hero: site.hero,
+      contact: site.contact,
+      about: site.about,
+      home: site.home,
+      legal: site.legal,
       banners,
       testimonials,
       listings,
@@ -54,25 +66,72 @@ router.get(
   }),
 );
 
+/*
+ * Har section ka apna GET + PATCH.
+ *
+ * Sab ek hi singleton document ke andar hain, par endpoints alag rakhe hain
+ * taaki do admin ek saath About aur Terms edit karein to ek doosre ka kaam na
+ * mite — PATCH sirf apne section ko chhoota hai.
+ */
+
+/** Ek section ka partial patch laga kar naya section wapas bhejta hai. */
+async function patchSection(path, body) {
+  const site = await SiteContent.singleton();
+  // subdocument par set() — jo fields aayi sirf wahi badalti hain
+  site.get(path).set(body);
+  await site.save();
+  return site.get(path);
+}
+
+const section = (name, schema) => {
+  router.get(
+    `/${name}`,
+    asyncHandler(async (_req, res) => {
+      const site = await SiteContent.singleton();
+      res.json({ [name]: site[name] });
+    }),
+  );
+
+  router.patch(
+    `/${name}`,
+    requireAuth,
+    requireAdmin,
+    validateBody(schema),
+    asyncHandler(async (req, res) => {
+      res.json({ [name]: await patchSection(name, req.body) });
+    }),
+  );
+};
+
+section("hero", heroPatchSchema);
+section("contact", contactPatchSchema);
+section("about", aboutPatchSchema);
+section("home", homePatchSchema);
+
+/* Legal ke do page ek hi shape ke hain, isliye page name URL me aata hai. */
+
 router.get(
-  "/hero",
-  asyncHandler(async (_req, res) => {
+  "/legal/:page",
+  asyncHandler(async (req, res) => {
+    const page = legalPageParam.safeParse(req.params.page);
+    if (!page.success) throw new ApiError(404, "Aisa koi legal page nahi hai.");
+
     const site = await SiteContent.singleton();
-    res.json({ hero: site.hero });
+    res.json({ page: page.data, doc: site.legal[page.data] });
   }),
 );
 
 router.patch(
-  "/hero",
+  "/legal/:page",
   requireAuth,
   requireAdmin,
-  validateBody(heroPatchSchema),
+  validateBody(legalPatchSchema),
   asyncHandler(async (req, res) => {
-    const site = await SiteContent.singleton();
-    // partial patch — jo fields aayi sirf wahi badalti hain
-    site.hero.set(req.body);
-    await site.save();
-    res.json({ hero: site.hero });
+    const page = legalPageParam.safeParse(req.params.page);
+    if (!page.success) throw new ApiError(404, "Aisa koi legal page nahi hai.");
+
+    const doc = await patchSection(`legal.${page.data}`, req.body);
+    res.json({ page: page.data, doc });
   }),
 );
 

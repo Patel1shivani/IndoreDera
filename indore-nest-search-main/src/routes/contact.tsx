@@ -8,6 +8,7 @@ import {
   GoMail,
   GoPaperAirplane,
 } from "react-icons/go";
+import { useSiteData } from "@/lib/site-data";
 
 export const Route = createFileRoute("/contact")({
   head: () => ({
@@ -29,23 +30,27 @@ export const Route = createFileRoute("/contact")({
 });
 
 function Contact() {
+  /* Address, phone, email aur timings admin panel se aate hain — wahi block
+     footer bhi use karta hai, isliye number ek jagah badalna kaafi hai. */
+  const { data } = useSiteData();
+  const { contact } = data;
   const [sent, setSent] = useState(false);
+
+  const details = [
+    { k: "Office", v: contact.address, icon: GoLocation },
+    { k: "Phone", v: contact.phone, icon: GoDeviceMobile },
+    { k: "Email", v: contact.email, icon: GoMail },
+    { k: "Timings", v: contact.timings, icon: GoClock },
+  ].filter((d) => d.v);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-14">
-      <h1 className="text-3xl tracking-wide sm:text-4xl">Sampark karein</h1>
-      <p className="mt-2 text-muted-foreground">
-        Koi sawaal ya suggestion? Hum Indore me hi hain, jaldi jawab denge.
-      </p>
+      <h1 className="text-3xl tracking-wide sm:text-4xl">{contact.heading}</h1>
+      <p className="mt-2 text-muted-foreground">{contact.subheading}</p>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_1.2fr]">
         <div className="space-y-4">
-          {[
-            { k: "Office", v: "Vijay Nagar, Indore, MP 452010", icon: GoLocation },
-            { k: "Phone", v: "+91 8962504009", icon: GoDeviceMobile },
-            { k: "Email", v: "shivimukati74@gmail.com", icon: GoMail },
-            { k: "Timings", v: "Mon – Sat, 10am – 7pm", icon: GoClock },
-          ].map((i) => (
+          {details.map((i) => (
             <div
               key={i.k}
               className="flex items-start gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft"
@@ -64,8 +69,8 @@ function Contact() {
         {sent ? (
           <div className="flex flex-col items-center justify-center rounded-2xl border border-brand-green bg-card p-10 text-center shadow-soft">
             <GoCheckCircleFill aria-hidden="true" className="h-12 w-12 text-brand-green" />
-            <h2 className="mt-3 text-2xl tracking-wide">Message bhej diya gaya</h2>
-            <p className="mt-2 text-muted-foreground">Hum jald hi aapse sampark karenge.</p>
+            <h2 className="mt-3 text-2xl tracking-wide">{contact.sentTitle}</h2>
+            <p className="mt-2 text-muted-foreground">{contact.sentText}</p>
           </div>
         ) : (
           <form

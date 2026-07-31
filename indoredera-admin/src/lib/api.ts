@@ -1,4 +1,17 @@
-import type { Banner, HeroContent, Plan, Property, Testimonial, User } from "./types";
+import type {
+  AboutContent,
+  Banner,
+  ContactContent,
+  HeroContent,
+  HomeContent,
+  LegalContent,
+  LegalDoc,
+  LegalPageKey,
+  Plan,
+  Property,
+  Testimonial,
+  User,
+} from "./types";
 
 /*
  * Backend API ka client.
@@ -85,6 +98,10 @@ async function request<T>(
 
 export interface SiteContent {
   hero: HeroContent;
+  contact: ContactContent;
+  about: AboutContent;
+  home: HomeContent;
+  legal: LegalContent;
   banners: Banner[];
   testimonials: Testimonial[];
   listings: Property[];
@@ -112,6 +129,33 @@ export const api = {
 
   patchHero: (patch: Partial<HeroContent>) =>
     request<{ hero: HeroContent }>("/api/content/hero", {
+      method: "PATCH",
+      body: patch,
+    }),
+
+  /* Baaki pages ka text. Har section ka apna endpoint hai taaki do admin ek
+     saath About aur Terms edit karein to ek doosre ka kaam na mite. */
+
+  patchContact: (patch: Partial<ContactContent>) =>
+    request<{ contact: ContactContent }>("/api/content/contact", {
+      method: "PATCH",
+      body: patch,
+    }),
+
+  patchAbout: (patch: Partial<AboutContent>) =>
+    request<{ about: AboutContent }>("/api/content/about", {
+      method: "PATCH",
+      body: patch,
+    }),
+
+  patchHome: (patch: Partial<HomeContent>) =>
+    request<{ home: HomeContent }>("/api/content/home", {
+      method: "PATCH",
+      body: patch,
+    }),
+
+  patchLegal: (page: LegalPageKey, patch: Partial<LegalDoc>) =>
+    request<{ page: LegalPageKey; doc: LegalDoc }>(`/api/content/legal/${page}`, {
       method: "PATCH",
       body: patch,
     }),

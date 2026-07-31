@@ -398,6 +398,205 @@ export function Stars({ rating }: { rating: number }) {
   );
 }
 
+/**
+ * Content pages ki save patti.
+ *
+ * Page ke neeche chipki rehti hai (sticky) taaki lambi form me scroll karne par
+ * bhi Save haath ke paas rahe, aur ek nazar me pata chale ki kuch save hona
+ * baaki hai ya nahi.
+ */
+export function SaveBar({
+  dirty,
+  saving,
+  error,
+  saved,
+  onSave,
+  onDiscard,
+}: {
+  /** Kitni fields badli hain. 0 = kuch save karna baaki nahi. */
+  dirty: number;
+  saving: boolean;
+  error: string | null;
+  /** Is page par ek baar save ho chuka hai — "sab save ho gaya" dikhane ke liye. */
+  saved: boolean;
+  onSave: () => void;
+  onDiscard: () => void;
+}) {
+  const status = error ? (
+    <>
+      <Icons.alert aria-hidden="true" className="h-4 w-4 shrink-0 text-danger" />
+      <span className="text-danger">{error}</span>
+    </>
+  ) : dirty > 0 ? (
+    /* text-warn khud bahut halka hai (light amber) — panel par padha nahi
+       jaata, isliye wahi gehra shade jo Badge me use hota hai */
+    <span className="flex items-center gap-2 text-[oklch(0.45_0.11_60)]">
+      <Icons.pending aria-hidden="true" className="h-4 w-4 shrink-0" />
+      <span>
+        <strong>{dirty}</strong> {dirty === 1 ? "change" : "changes"} save nahi hue
+      </span>
+    </span>
+  ) : saved ? (
+    <>
+      <Icons.approve aria-hidden="true" className="h-4 w-4 shrink-0 text-ok" />
+      <span className="text-ink-soft">Sab save ho gaya — website par live hai</span>
+    </>
+  ) : (
+    <>
+      <Icons.info aria-hidden="true" className="h-4 w-4 shrink-0 text-ink-soft" />
+      <span className="text-ink-soft">Koi change nahi</span>
+    </>
+  );
+
+  return (
+    <div
+      className={`card sticky bottom-0 z-10 flex flex-wrap items-center justify-between gap-3 bg-panel/95 px-5 py-3 backdrop-blur ${
+        // save baaki ho to patti khud dikhe ki dhyaan chahiye
+        dirty > 0 ? "border-warn" : "border-line/70"
+      }`}
+    >
+      <p className="flex min-w-0 items-center gap-2 text-sm">{status}</p>
+      <div className="flex shrink-0 gap-2">
+        <button
+          type="button"
+          className="btn btn-ghost"
+          disabled={dirty === 0 || saving}
+          onClick={onDiscard}
+        >
+          <Icons.refresh aria-hidden="true" className="h-4 w-4" />
+          Wapas lein
+        </button>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={dirty === 0 || saving}
+          onClick={onSave}
+        >
+          <Icons.check aria-hidden="true" className="h-4 w-4" />
+          {saving ? "Save ho raha hai…" : "Save karein"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Add / remove / upar-neeche wali list.
+ *
+ * About ke steps, legal clauses, FAQ, bullet points — sab jagah wahi teen
+ * kaam chahiye the, isliye ek hi component. Row ke andar kya dikhega wo caller
+ * decide karta hai; ye sirf ordering aur add/remove sambhalta hai.
+ *
+ * Ordering isliye zaroori hai kyunki website list ko usi kram me dikhati hai
+ * jis kram me wo array me hai (legal clauses to numbered bhi hain).
+ */
+export function ListEditor<T>({
+  items,
+  onChange,
+  create,
+  addLabel = "Naya add karein",
+  itemLabel,
+  children,
+}: {
+  items: T[];
+  onChange: (next: T[]) => void;
+  /** Naya khaali item — "Add" par yahi list ke aakhir me judta hai. */
+  create: () => T;
+  addLabel?: string;
+  /** Row ke upar chhota label, jaise "Clause 3". */
+  itemLabel?: (index: number) => string;
+  children: (item: T, set: (next: T) => void, index: number) => ReactNode;
+}) {
+  const replace = (index: number, next: T) =>
+    onChange(items.map((item, i) => (i === index ? next : item)));
+
+  const move = (index: number, dir: -1 | 1) => {
+    const to = index + dir;
+    if (to < 0 || to >= items.length) return;
+    const next = [...items];
+    [next[index], next[to]] = [next[to], next[index]];
+    onChange(next);
+  };
+
+  return (
+    <div className="space-y-3">
+      {items.length === 0 && (
+        <p className="rounded-lg border border-dashed border-line bg-surface/60 px-4 py-6 text-center text-sm text-ink-soft">
+          Abhi kuch nahi hai — neeche se add karein.
+        </p>
+      )}
+
+      {items.map((item, index) => (
+        <div
+          // index hi key hai: in lists me koi stable id nahi hota aur content
+          // se key banane par typing ke beech row remount ho jaati hai
+          key={index}
+          className="rounded-xl border border-line bg-surface/50 p-3"
+        >
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-wide text-ink-soft">
+              {itemLabel?.(index) ?? `#${index + 1}`}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <IconButton
+                icon={Icons.moveUp}
+                label="Upar le jaayein"
+                disabled={index === 0}
+                onClick={() => move(index, -1)}
+              />
+              <IconButton
+                icon={Icons.moveDown}
+                label="Neeche le jaayein"
+                disabled={index === items.length - 1}
+                onClick={() => move(index, 1)}
+              />
+              <IconButton
+                icon={Icons.remove}
+                label="Hataayein"
+                tone="danger"
+                onClick={() => onChange(items.filter((_, i) => i !== index))}
+              />
+            </div>
+          </div>
+          {children(item, (next) => replace(index, next), index)}
+        </div>
+      ))}
+
+      <button type="button" className="btn btn-ghost" onClick={() => onChange([...items, create()])}>
+        <Icons.add aria-hidden="true" className="h-4 w-4" />
+        {addLabel}
+      </button>
+    </div>
+  );
+}
+
+/** Sirf strings ki list — bullet points ke liye ListEditor ka shortcut. */
+export function StringListEditor({
+  items,
+  onChange,
+  addLabel,
+  placeholder,
+}: {
+  items: string[];
+  onChange: (next: string[]) => void;
+  addLabel?: string;
+  placeholder?: string;
+}) {
+  return (
+    <ListEditor items={items} onChange={onChange} create={() => ""} addLabel={addLabel}>
+      {(item, set) => (
+        <textarea
+          rows={2}
+          className="input"
+          placeholder={placeholder}
+          value={item}
+          onChange={(e) => set(e.target.value)}
+        />
+      )}
+    </ListEditor>
+  );
+}
+
 /** Chhoti key-value line — cards ke andar meta info ke liye. */
 export function MetaLine({ icon: Icon, children }: { icon: IconType; children: ReactNode }) {
   return (

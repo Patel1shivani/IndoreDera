@@ -2,42 +2,24 @@ import { useState } from "react";
 import { GoChevronDown, GoQuestion } from "react-icons/go";
 import { Reveal } from "@/components/reveal";
 import { useInView } from "@/hooks/use-in-view";
+import { useSiteData } from "@/lib/site-data";
 
 /**
  * Home page ka FAQ. Radix accordion ki jagah apna chhota version — yahan
  * height 0fr → 1fr grid transition se khulta hai, jo bina JS height maape
  * smooth chalta hai.
+ *
+ * Sawaal-jawab admin panel se aate hain (Content → Home page text), isliye
+ * yahan koi list hard-coded nahi hai.
  */
-const faqs = [
-  {
-    q: "Kya Indore Dera par brokerage lagti hai?",
-    a: "Bilkul nahi. Aap seedha owner se baat karte hain — beech me koi broker nahi, isliye kirayedaar ko ek rupaya brokerage nahi deni padti.",
-  },
-  {
-    q: "Listing dekhne ke liye account zaroori hai?",
-    a: "Haan, ek free account banana padta hai. Isse owner ka number sirf genuine logon tak jaata hai aur fake enquiries ruk jaati hain. Registration me sirf naam, mobile aur email lagta hai.",
-  },
-  {
-    q: "Main apni property kaise list karun?",
-    a: "‘List Your Property’ par jaayein, photos ke saath detail bharein aur submit kar dein. Pehli listing bilkul free hai; admin verify karte hi wo live ho jaati hai.",
-  },
-  {
-    q: "Kitni der me listing approve hoti hai?",
-    a: "Aam taur par 24 ghante ke andar. Photos saaf hon aur rent, deposit, area sahi bhare hon to approval jaldi ho jaata hai.",
-  },
-  {
-    q: "Kaun-kaun se ilaake cover hote hain?",
-    a: "Poora Indore — Vijay Nagar, Palasia, Nipania, Bhawarkuan, Rau, Sudama Nagar, Annapurna, Rajwada, Mhow Naka aur Scheme No. 78 tak.",
-  },
-  {
-    q: "Flat ke alawa aur kya milta hai?",
-    a: "Room, dukaan/showroom, PG-hostel aur zameen/godown bhi. Search box me seedha ‘dukaan’ ya ‘kamra’ likhein — Roman-Hindi bhi samajh me aata hai.",
-  },
-];
-
 export function FaqSection() {
+  const { data } = useSiteData();
+  const { faqTitle, faqSubtitle, faqs } = data.home;
   const [open, setOpen] = useState<number | null>(0);
   const { ref: titleRef, inView: titleInView } = useInView<HTMLHeadingElement>(0.4);
+
+  // ek bhi sawaal na ho to poora section hi chhupa dete hain
+  if (faqs.length === 0) return null;
 
   return (
     <section className="mx-auto max-w-3xl px-4 py-14">
@@ -46,11 +28,9 @@ export function FaqSection() {
         data-visible={titleInView}
         className="heading-rule text-center text-3xl tracking-wide"
       >
-        Aksar poochhe jaane wale sawaal
+        {faqTitle}
       </h2>
-      <p className="mt-3 text-center text-muted-foreground">
-        Jo sawaal Indore walon ne sabse zyada poochhe
-      </p>
+      <p className="mt-3 text-center text-muted-foreground">{faqSubtitle}</p>
 
       <div className="mt-8 grid gap-3">
         {faqs.map((f, i) => {

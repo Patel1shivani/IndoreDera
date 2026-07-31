@@ -1,4 +1,5 @@
-import { Card, Field } from "../components/ui";
+import { Card, Field, SaveBar } from "../components/ui";
+import { useSectionEditor } from "../lib/draft";
 import { Icons, type IconType } from "../lib/icons";
 import { useStore } from "../lib/store";
 import type { HeroContent } from "../lib/types";
@@ -44,9 +45,14 @@ const groups: {
 ];
 
 export function ContentPage() {
-  const { siteData, updateHero } = useStore();
+  const { siteData } = useStore();
   if (!siteData) return null;
-  const { hero } = siteData;
+  return <HeroEditor server={siteData.hero} />;
+}
+
+function HeroEditor({ server }: { server: HeroContent }) {
+  const { saveHero } = useStore();
+  const { draft, update, state } = useSectionEditor(server, saveHero);
 
   return (
     <div className="space-y-6">
@@ -54,33 +60,29 @@ export function ContentPage() {
         icon={Icons.show}
         tone="brand"
         title="Hero preview"
-        subtitle="Website par bilkul aisa dikhega"
+        subtitle="Save karne par website par bilkul aisa dikhega"
       >
         <div className="rounded-xl border border-line bg-surface px-6 py-8 text-center">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-ok px-3 py-1 text-xs font-semibold text-white">
             <Icons.verified aria-hidden="true" className="h-3 w-3" />
-            {hero.badge}
+            {draft.badge}
           </span>
           <p className="mx-auto mt-4 max-w-2xl font-display text-3xl tracking-wide">
-            {hero.titleStart} <span className="text-brand">{hero.titleHighlight}</span>{" "}
-            {hero.titleEnd}
+            {draft.titleStart} <span className="text-brand">{draft.titleHighlight}</span>{" "}
+            {draft.titleEnd}
           </p>
-          <p className="mx-auto mt-2 max-w-xl text-sm text-ink-soft">{hero.subtitle}</p>
+          <p className="mx-auto mt-2 max-w-xl text-sm text-ink-soft">{draft.subtitle}</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <span className="inline-flex items-center gap-1.5 rounded-lg bg-brand px-3.5 py-2 text-sm font-semibold text-white">
               <Icons.search aria-hidden="true" className="h-3.5 w-3.5" />
-              {hero.searchCta}
+              {draft.searchCta}
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3.5 py-2 text-sm font-semibold">
               <Icons.add aria-hidden="true" className="h-3.5 w-3.5" />
-              {hero.ownerCta}
+              {draft.ownerCta}
             </span>
           </div>
         </div>
-        <p className="mt-3 flex items-center gap-1.5 text-xs text-ink-soft">
-          <Icons.info aria-hidden="true" className="h-3.5 w-3.5" />
-          Changes turant save ho jaate hain — alag se Save button nahi hai.
-        </p>
       </Card>
 
       {groups.map((g) => (
@@ -93,15 +95,15 @@ export function ContentPage() {
                     id={`hero-${f.key}`}
                     rows={2}
                     className="input"
-                    value={hero[f.key]}
-                    onChange={(e) => updateHero({ [f.key]: e.target.value })}
+                    value={draft[f.key]}
+                    onChange={(e) => update({ [f.key]: e.target.value })}
                   />
                 ) : (
                   <input
                     id={`hero-${f.key}`}
                     className="input"
-                    value={hero[f.key]}
-                    onChange={(e) => updateHero({ [f.key]: e.target.value })}
+                    value={draft[f.key]}
+                    onChange={(e) => update({ [f.key]: e.target.value })}
                   />
                 )}
               </Field>
@@ -109,6 +111,8 @@ export function ContentPage() {
           </div>
         </Card>
       ))}
+
+      <SaveBar {...state} />
     </div>
   );
 }

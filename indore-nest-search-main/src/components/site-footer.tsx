@@ -12,6 +12,7 @@ import {
 import logo from "../assets/logo.png";
 import { mainNav } from "@/lib/nav";
 import { propertyTypes } from "@/lib/properties";
+import { useSiteData } from "@/lib/site-data";
 
 /* Company column ke links — har link ka apna Octicon. */
 const companyLinks = [
@@ -28,14 +29,17 @@ const legalLinks = [
 ] as const;
 
 export function SiteFooter() {
+  /* Tagline aur "Reach Us" ka contact — dono admin panel se aate hain, wahi
+     block jo /contact page bharta hai. */
+  const { data } = useSiteData();
+  const { contact, hero } = data;
+
   return (
     <footer className="mt-20 border-t-4 border-accent bg-primary text-primary-foreground">
       <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-5">
         <div>
           <img src={logo} alt="Indore Dera" className="h-36 w-36 object-contain" />
-          <p className="-mt-8 text-sm text-primary-foreground/80">
-            Indore ka apna rental platform — flats, rooms, shops, PG aur zameen, sab ek jagah.
-          </p>
+          <p className="-mt-8 text-sm text-primary-foreground/80">{contact.footerTagline}</p>
         </div>
         {/* Wahi menu jo header aur mobile drawer me hai — @/lib/nav se aata hai. */}
         <div>
@@ -86,18 +90,19 @@ export function SiteFooter() {
           <ul className="mt-3 space-y-2 text-sm text-primary-foreground/80">
             <li className="flex items-start gap-2">
               <GoLocation aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
-              Vijay Nagar, Indore, MP 452010
+              {contact.address}
             </li>
             <li className="flex items-center gap-2">
               <GoDeviceMobile aria-hidden="true" className="h-4 w-4 shrink-0" />
-              <a href="tel:+918962504009" className="hover:text-accent">
-                +91 8962504009
+              {/* tel: me space aur "+" nahi chalte — sirf digits bhejte hain */}
+              <a href={`tel:${contact.phone.replace(/[^\d+]/g, "")}`} className="hover:text-accent">
+                {contact.phone}
               </a>
             </li>
             <li className="flex items-center gap-2">
               <GoMail aria-hidden="true" className="h-4 w-4 shrink-0" />
-              <a href="mailto:shivimukati74@gmail.com" className="hover:text-accent">
-                shivimukati74@gmail.com
+              <a href={`mailto:${contact.email}`} className="hover:text-accent">
+                {contact.email}
               </a>
             </li>
           </ul>
@@ -105,7 +110,9 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-primary-foreground/15">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-3 px-4 py-4 text-xs text-primary-foreground/70 sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} Indore Dera · अपना घर, अपना शहर</p>
+          <p>
+            © {new Date().getFullYear()} {hero.logoText} · {hero.logoTagline}
+          </p>
           <ul className="flex items-center gap-4">
             {legalLinks.map((l) => (
               <li key={l.to}>

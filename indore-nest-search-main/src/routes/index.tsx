@@ -5,7 +5,6 @@ import {
   GoArrowRight,
   GoChevronLeft,
   GoChevronRight,
-  GoCommentDiscussion,
   GoCreditCard,
   GoDotFill,
   GoHomeFill,
@@ -15,8 +14,6 @@ import {
   GoSearch,
   GoShieldCheck,
   GoTag,
-  GoVerified,
-  GoZap,
 } from "react-icons/go";
 import { BannerStrip } from "@/components/banner-strip";
 import { CountUp } from "@/components/count-up";
@@ -26,6 +23,7 @@ import { LoginGate } from "@/components/login-gate";
 import { PropertyCard } from "@/components/property-card";
 import { Reveal } from "@/components/reveal";
 import { useInView } from "@/hooks/use-in-view";
+import { contentIcon } from "@/lib/content-icons";
 import { TestimonialsSection } from "@/components/testimonials-section";
 import { useAuth } from "@/lib/auth";
 import { localities, propertyTypes } from "@/lib/properties";
@@ -50,28 +48,6 @@ export const Route = createFileRoute("/")({
   component: Home,
 });
 
-/* Har step ka apna Octicon — pehle sirf number tha. */
-const steps = [
-  {
-    n: "1",
-    icon: GoPersonAdd,
-    t: "Account banayein",
-    d: "Free registration — uske baad saari listings unlock ho jaati hain.",
-  },
-  {
-    n: "2",
-    icon: GoSearch,
-    t: "Search karein",
-    d: "Ek hi box me area, BHK, budget ya type likhein.",
-  },
-  {
-    n: "3",
-    icon: GoCommentDiscussion,
-    t: "Owner se baat",
-    d: "Bina brokerage, seedha owner ko call ya WhatsApp.",
-  },
-];
-
 const budgetOptions = [
   { value: "5000", label: "Upto ₹5,000" },
   { value: "10000", label: "Upto ₹10,000" },
@@ -84,29 +60,6 @@ const heroTrust = [
   { icon: GoTag, label: "0% brokerage" },
   { icon: GoShieldCheck, label: "Verified owners" },
   { icon: GoLocation, label: "Sirf Indore" },
-];
-
-const whyPoints = [
-  {
-    icon: GoTag,
-    t: "Zero brokerage",
-    d: "Na broker, na commission. Jo rent listing me likha hai, bas wahi dena hota hai.",
-  },
-  {
-    icon: GoCommentDiscussion,
-    t: "Seedha owner se baat",
-    d: "Call ya WhatsApp par khud owner — beech me koi agent nahi, jawab turant.",
-  },
-  {
-    icon: GoVerified,
-    t: "Verified listings",
-    d: "Har listing admin check karta hai, tabhi live hoti hai. Fake photos nahi.",
-  },
-  {
-    icon: GoZap,
-    t: "Ek box, poora Indore",
-    d: "‘2 BHK Vijay Nagar 10000’ ya ‘dukaan Palasia’ — jaise bolte hain waise hi search.",
-  },
 ];
 
 /* Budget bands wahi hain jo /properties ke filters me hain — link seedha wahin kholta hai. */
@@ -122,7 +75,7 @@ function Home() {
   const navigate = useNavigate();
   const { user, ready } = useAuth();
   const { data } = useSiteData();
-  const { hero } = data;
+  const { hero, home } = data;
 
   const [q, setQ] = useState("");
   const [type, setType] = useState("");
@@ -379,22 +332,22 @@ function Home() {
           className="dot-grid pointer-events-none absolute inset-0 opacity-40"
         />
         <div className="relative mx-auto max-w-7xl px-4">
-          <SectionHeading
-            title="Indore Dera hi kyun?"
-            subtitle="Kirayedaar aur owner, dono ke liye seedha-saada tareeka"
-          />
+          <SectionHeading title={home.whyTitle} subtitle={home.whySubtitle} />
           <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {whyPoints.map((w, i) => (
-              <Reveal key={w.t} delay={i * 90} variant="up">
-                <div className="card-hover group h-full rounded-2xl border border-border bg-card p-6 shadow-soft">
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-6">
-                    <w.icon aria-hidden="true" className="h-6 w-6" />
-                  </span>
-                  <h3 className="mt-4 text-lg tracking-wide">{w.t}</h3>
-                  <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{w.d}</p>
-                </div>
-              </Reveal>
-            ))}
+            {home.whyPoints.map((w, i) => {
+              const Icon = contentIcon(w.icon);
+              return (
+                <Reveal key={`${i}-${w.t}`} delay={i * 90} variant="up">
+                  <div className="card-hover group h-full rounded-2xl border border-border bg-card p-6 shadow-soft">
+                    <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary transition-transform duration-300 group-hover:-translate-y-1 group-hover:rotate-6">
+                      <Icon aria-hidden="true" className="h-6 w-6" />
+                    </span>
+                    <h3 className="mt-4 text-lg tracking-wide">{w.t}</h3>
+                    <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">{w.d}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -444,10 +397,7 @@ function Home() {
       </section>
 
       <section className="mx-auto max-w-7xl px-4 py-14">
-        <SectionHeading
-          title="Kaise kaam karta hai?"
-          subtitle="Teen step — aur aap seedha owner se baat kar rahe honge"
-        />
+        <SectionHeading title={home.stepsTitle} subtitle={home.stepsSubtitle} />
         <div className="relative mt-8">
           {/* Steps ko jodne wali dashed line — sirf bade screen par */}
           <div
@@ -455,20 +405,25 @@ function Home() {
             className="absolute left-[16%] right-[16%] top-11 hidden border-t-2 border-dashed border-border sm:block"
           />
           <div className="relative grid gap-6 sm:grid-cols-3">
-            {steps.map((s, i) => (
-              <Reveal key={s.n} delay={i * 120}>
-                <div className="card-hover h-full rounded-2xl border border-border bg-card p-6 shadow-soft">
-                  <span className="animate-pulse-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary font-display text-lg text-primary-foreground">
-                    {s.n}
-                  </span>
-                  <h3 className="mt-4 flex items-center gap-2 text-xl tracking-wide">
-                    <s.icon aria-hidden="true" className="h-5 w-5 text-primary" />
-                    {s.t}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
-                </div>
-              </Reveal>
-            ))}
+            {home.steps.map((s, i) => {
+              const Icon = contentIcon(s.icon);
+              return (
+                <Reveal key={`${i}-${s.t}`} delay={i * 120}>
+                  <div className="card-hover h-full rounded-2xl border border-border bg-card p-6 shadow-soft">
+                    <span className="animate-pulse-ring flex h-10 w-10 items-center justify-center rounded-full bg-primary font-display text-lg text-primary-foreground">
+                      {/* number list ke kram se banta hai — admin ko alag se
+                          nahi likhna padta */}
+                      {i + 1}
+                    </span>
+                    <h3 className="mt-4 flex items-center gap-2 text-xl tracking-wide">
+                      <Icon aria-hidden="true" className="h-5 w-5 text-primary" />
+                      {s.t}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{s.d}</p>
+                  </div>
+                </Reveal>
+              );
+            })}
           </div>
         </div>
       </section>

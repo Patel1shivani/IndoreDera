@@ -20,6 +20,7 @@ import {
   GoChecklist,
   GoChevronDown,
   GoChevronRight,
+  GoChevronUp,
   GoClock,
   GoCommentDiscussion,
   GoContainer,
@@ -106,6 +107,8 @@ export const Icons = {
   arrowUp: GoArrowUpRight,
   chevronDown: GoChevronDown,
   chevronRight: GoChevronRight,
+  moveUp: GoChevronUp,
+  moveDown: GoChevronDown,
   close: GoX,
 
   /* status / meta */

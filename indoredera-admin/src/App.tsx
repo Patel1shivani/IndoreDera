@@ -1,14 +1,19 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Layout } from "./components/layout";
 import { LoginScreen } from "./components/login-screen";
 import { EmptyState } from "./components/ui";
 import { AuthProvider, useAdminAuth } from "./lib/auth";
 import { Icons } from "./lib/icons";
 import { StoreProvider, useStore } from "./lib/store";
+import { UnsavedProvider, useUnsaved } from "./lib/unsaved";
+import { AboutPage } from "./pages/about-page";
 import { BannersPage } from "./pages/banners-page";
+import { ContactPage } from "./pages/contact-page";
 import { ContentPage } from "./pages/content-page";
 import { DashboardPage } from "./pages/dashboard-page";
 import { GuidePage } from "./pages/guide-page";
+import { HomeTextPage } from "./pages/home-text-page";
+import { LegalPagesPage } from "./pages/legal-pages";
 import { ListingsPage } from "./pages/listings-page";
 import { PlansPage } from "./pages/plans-page";
 import { SubscriptionsPage } from "./pages/subscriptions-page";
@@ -36,7 +41,6 @@ export function App() {
 
 function Gate() {
   const { admin, ready } = useAdminAuth();
-  const [page, setPage] = useState<PageId>("dashboard");
 
   // purana token verify hone tak login screen flash na ho
   if (!ready) {
@@ -51,10 +55,31 @@ function Gate() {
 
   return (
     <StoreProvider>
-      <Layout current={page} onNavigate={setPage}>
-        <PageBody page={page} onNavigate={setPage} />
-      </Layout>
+      <UnsavedProvider>
+        <Panel />
+      </UnsavedProvider>
     </StoreProvider>
+  );
+}
+
+function Panel() {
+  const [page, setPage] = useState<PageId>("dashboard");
+  const { confirmLeave } = useUnsaved();
+
+  /* Content pages par Save button hai, isliye admin bina save kiye doosre page
+     par ja sakta hai. Aisa hone se pehle ek baar poochh lete hain — warna uska
+     likha hua chup-chaap gayab ho jaata. */
+  const navigate = useCallback(
+    (next: PageId) => {
+      if (confirmLeave()) setPage(next);
+    },
+    [confirmLeave],
+  );
+
+  return (
+    <Layout current={page} onNavigate={navigate}>
+      <PageBody page={page} onNavigate={navigate} />
+    </Layout>
   );
 }
 
@@ -100,6 +125,14 @@ function PageBody({ page, onNavigate }: { page: PageId; onNavigate: (id: PageId)
       return <BannersPage />;
     case "content":
       return <ContentPage />;
+    case "home-text":
+      return <HomeTextPage />;
+    case "about":
+      return <AboutPage />;
+    case "contact":
+      return <ContactPage />;
+    case "legal":
+      return <LegalPagesPage />;
     case "testimonials":
       return <TestimonialsPage />;
     case "plans":

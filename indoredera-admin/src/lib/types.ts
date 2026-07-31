@@ -72,6 +72,123 @@ export interface HeroContent {
   lockedSubtitle: string;
 }
 
+/* --------------------------------------------------- baaki pages ka text */
+
+/*
+ * About/Contact/Home/Legal ka text.
+ *
+ * Ye sab pehle website ke code me hard-coded tha. Ab backend ke SiteContent
+ * singleton me rehta hai, isliye admin panel se badla ja sakta hai —
+ * shape backend ke site-content.model.js se match karna zaroori hai.
+ */
+
+/** Icon + title + description — steps, values aur why-points sab isi shape me. */
+export interface Blurb {
+  icon: string;
+  t: string;
+  d: string;
+}
+
+export interface Faq {
+  q: string;
+  a: string;
+}
+
+/** Legal page ka ek numbered clause — paragraph aur/ya bullet list. */
+export interface LegalClause {
+  title: string;
+  body: string;
+  items: string[];
+}
+
+export interface LegalDoc {
+  title: string;
+  updated: string;
+  intro: string;
+  sections: LegalClause[];
+}
+
+export type LegalPageKey = "privacy" | "terms";
+
+export interface ContactContent {
+  heading: string;
+  subheading: string;
+  address: string;
+  phone: string;
+  email: string;
+  timings: string;
+  sentTitle: string;
+  sentText: string;
+  footerTagline: string;
+}
+
+export interface AboutContent {
+  badge: string;
+  title: string;
+  intro: string;
+  bullets: string[];
+  meaningTitle: string;
+  meaningBody: string;
+  weAreTitle: string;
+  weAre: string[];
+  weAreNotTitle: string;
+  weAreNot: string[];
+  howTitle: string;
+  howSubtitle: string;
+  tenantTitle: string;
+  tenantSteps: Blurb[];
+  ownerTitle: string;
+  ownerSteps: Blurb[];
+  typesTitle: string;
+  localitiesSubtitle: string;
+  valuesTitle: string;
+  values: Blurb[];
+  ctaTitle: string;
+  ctaText: string;
+  helpTitle: string;
+  helpText: string;
+}
+
+export interface HomeContent {
+  whyTitle: string;
+  whySubtitle: string;
+  whyPoints: Blurb[];
+  stepsTitle: string;
+  stepsSubtitle: string;
+  steps: Blurb[];
+  faqTitle: string;
+  faqSubtitle: string;
+  faqs: Faq[];
+}
+
+export type LegalContent = Record<LegalPageKey, LegalDoc>;
+
+/**
+ * Icon ke naam jo backend maanta hai (CONTENT_ICONS). Website inhe apne
+ * react-icons components par map karti hai — yahan sirf dropdown ke liye.
+ */
+export const contentIcons = [
+  "tag",
+  "globe",
+  "location",
+  "shield",
+  "verified",
+  "zap",
+  "comment",
+  "search",
+  "personAdd",
+  "home",
+  "rocket",
+  "clock",
+  "mail",
+  "phone",
+  "star",
+  "check",
+  "creditCard",
+  "people",
+  "info",
+] as const;
+
 export interface Banner {
   id: string;
   audience: Audience;
@@ -105,6 +222,10 @@ export interface Plan {
 
 export interface SiteData {
   hero: HeroContent;
+  contact: ContactContent;
+  about: AboutContent;
+  home: HomeContent;
+  legal: LegalContent;
   banners: Banner[];
   testimonials: Testimonial[];
   listings: Property[];

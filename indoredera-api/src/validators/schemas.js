@@ -156,6 +156,112 @@ export const heroPatchSchema = z
   })
   .partial();
 
+/* ------------------------------------------------- baaki page ka site text */
+
+/*
+ * About/Contact/Home/Legal ka text.
+ *
+ * Har section ka patch partial hai — admin panel ek waqt me ek hi field bhejta
+ * hai, isliye jo field nahi aayi use chhedna nahi chahiye. Arrays isse alag
+ * hain: wo poori replace hoti hain, kyunki "teesra bullet hata do" ko partial
+ * merge se express nahi kiya ja sakta.
+ */
+
+const line = (max) => z.string().trim().max(max);
+
+const blurb = z.object({
+  icon: line(40).default(""),
+  t: line(160).default(""),
+  d: line(600).default(""),
+});
+
+export const contactPatchSchema = z
+  .object({
+    heading: line(120),
+    subheading: line(400),
+    address: line(240),
+    phone: line(60),
+    email: line(160),
+    timings: line(120),
+    sentTitle: line(160),
+    sentText: line(400),
+    footerTagline: line(400),
+  })
+  .partial();
+
+export const aboutPatchSchema = z
+  .object({
+    badge: line(120),
+    title: line(200),
+    intro: line(800),
+    bullets: z.array(line(120)).max(8),
+
+    meaningTitle: line(160),
+    meaningBody: line(2000),
+
+    weAreTitle: line(160),
+    weAre: z.array(line(300)).max(12),
+    weAreNotTitle: line(160),
+    weAreNot: z.array(line(300)).max(12),
+
+    howTitle: line(160),
+    howSubtitle: line(400),
+    tenantTitle: line(160),
+    tenantSteps: z.array(blurb).max(8),
+    ownerTitle: line(160),
+    ownerSteps: z.array(blurb).max(8),
+
+    typesTitle: line(160),
+    localitiesSubtitle: line(400),
+
+    valuesTitle: line(160),
+    values: z.array(blurb).max(8),
+
+    ctaTitle: line(160),
+    ctaText: line(400),
+    helpTitle: line(160),
+    helpText: line(400),
+  })
+  .partial();
+
+export const homePatchSchema = z
+  .object({
+    whyTitle: line(160),
+    whySubtitle: line(400),
+    whyPoints: z.array(blurb).max(8),
+
+    stepsTitle: line(160),
+    stepsSubtitle: line(400),
+    steps: z.array(blurb).max(8),
+
+    faqTitle: line(160),
+    faqSubtitle: line(400),
+    faqs: z
+      .array(z.object({ q: line(300).default(""), a: line(2000).default("") }))
+      .max(30, "Zyada se zyada 30 sawaal rakhein."),
+  })
+  .partial();
+
+export const legalPatchSchema = z
+  .object({
+    title: line(160),
+    updated: line(60),
+    intro: line(1200),
+    sections: z
+      .array(
+        z.object({
+          title: line(200).default(""),
+          body: line(4000).default(""),
+          items: z.array(line(600)).max(20).default([]),
+        }),
+      )
+      .max(40, "Zyada se zyada 40 clause rakhein."),
+  })
+  .partial();
+
+/** URL me sirf yahi do legal page aate hain. */
+export const legalPageParam = z.enum(["privacy", "terms"]);
+
 /* ------------------------------------------------------------ admin users */
 
 export const userRoleSchema = z.object({ role: z.enum(["tenant", "owner", "admin"]) });

@@ -9,7 +9,19 @@ import {
   type ReactNode,
 } from "react";
 import { api, ApiError } from "./api";
-import type { Banner, Plan, Property, SiteData, Testimonial, User } from "./types";
+import type {
+  AboutContent,
+  Banner,
+  ContactContent,
+  HomeContent,
+  LegalDoc,
+  LegalPageKey,
+  Plan,
+  Property,
+  SiteData,
+  Testimonial,
+  User,
+} from "./types";
 
 /*
  * Poora admin data ek jagah. Server hi single source of truth hai — yahan koi
@@ -35,7 +47,15 @@ type StoreValue = {
   empty: boolean;
   refresh: () => Promise<void>;
 
-  updateHero: (patch: Partial<SiteData["hero"]>) => void;
+  /* Website ke text sections.
+     Baaki actions fire-and-forget hain (ek click = ek call), par ye Save button
+     se chalte hain — page ko pata hona chahiye ki save hua ya fail, isliye ye
+     promise lautate hain. */
+  saveHero: (patch: Partial<SiteData["hero"]>) => Promise<void>;
+  saveContact: (patch: Partial<ContactContent>) => Promise<void>;
+  saveAbout: (patch: Partial<AboutContent>) => Promise<void>;
+  saveHome: (patch: Partial<HomeContent>) => Promise<void>;
+  saveLegal: (page: LegalPageKey, patch: Partial<LegalDoc>) => Promise<void>;
   saveBanner: (banner: Banner) => void;
   removeBanner: (id: string) => void;
   setTestimonialStatus: (id: string, status: Testimonial["status"]) => void;
@@ -71,6 +91,10 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (Date.now() - lastWriteRef.current < 2000) return;
       setSiteData({
         hero: content.hero,
+        contact: content.contact,
+        about: content.about,
+        home: content.home,
+        legal: content.legal,
         banners: content.banners,
         testimonials: content.testimonials,
         listings: content.listings,
@@ -147,6 +171,25 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     [mutate],
   );
 
+  /*
+   * Text sections ka save.
+   *
+   * Yahan optimistic update nahi hai: page ke paas apna draft hota hai aur wahi
+   * screen par dikh raha hota hai. Hum sirf server ka jawab siteData me rakh
+   * dete hain, taaki polling purana text wapas na le aaye. Error page khud
+   * dikhata hai (Save button ke paas), isliye yahan throw hone dete hain.
+   */
+  const saveSection = useCallback(
+    async <R,>(call: () => Promise<R>, apply: (d: SiteData, result: R) => SiteData) => {
+      const result = await call();
+      // save ke turant baad wali poll server ka purana snapshot na thop de
+      lastWriteRef.current = Date.now();
+      setSiteData((current) => (current ? apply(current, result) : current));
+      setError(null);
+    },
+    [],
+  );
+
   const value = useMemo<StoreValue>(
     () => ({
       siteData,
@@ -156,11 +199,34 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       empty: !loading && siteData === null,
       refresh,
 
-      updateHero: (heroPatch) =>
-        patchSite(
-          (d) => ({ ...d, hero: { ...d.hero, ...heroPatch } }),
-          () => api.patchHero(heroPatch),
-          "Hero text save nahi hua.",
+      saveHero: (patch) =>
+        saveSection(
+          () => api.patchHero(patch),
+          (d, res) => ({ ...d, hero: res.hero }),
+        ),
+
+      saveContact: (patch) =>
+        saveSection(
+          () => api.patchContact(patch),
+          (d, res) => ({ ...d, contact: res.contact }),
+        ),
+
+      saveAbout: (patch) =>
+        saveSection(
+          () => api.patchAbout(patch),
+          (d, res) => ({ ...d, about: res.about }),
+        ),
+
+      saveHome: (patch) =>
+        saveSection(
+          () => api.patchHome(patch),
+          (d, res) => ({ ...d, home: res.home }),
+        ),
+
+      saveLegal: (page, patch) =>
+        saveSection(
+          () => api.patchLegal(page, patch),
+          (d, res) => ({ ...d, legal: { ...d.legal, [page]: res.doc } }),
         ),
 
       saveBanner: (banner) =>
@@ -271,7 +337,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         );
       },
     }),
-    [siteData, users, loading, error, refresh, patchSite, patchUsers],
+    [siteData, users, loading, error, refresh, patchSite, patchUsers, saveSection],
   );
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;

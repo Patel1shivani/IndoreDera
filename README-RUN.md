@@ -64,6 +64,26 @@ Ye account backend banata hai — credentials `indoredera-api/.env` me hain
 (`ADMIN_EMAIL` / `ADMIN_PASSWORD`). Login page par "Demo credentials bharein"
 button bhi hai. Website par admin ka koi link nahi hai.
 
+## Website ka text admin se
+
+Website par jo bhi likha hua dikhta hai, wo ab code me nahi — database me hai,
+aur admin panel ke **Content** section se badalta hai:
+
+| Admin page | Website par kahan |
+|---|---|
+| Hero & logo | Homepage ka hero, logo text, login gate |
+| Home page text | "Indore Dera hi kyun?", "Kaise kaam karta hai?", FAQ |
+| About page | `/about` ka poora text |
+| Contact & footer | `/contact` ke details + footer ka address/phone/email/tagline |
+| Privacy & Terms | `/privacy` aur `/terms` ke saare clauses |
+| Banners, Plans, Testimonials | pehle se the |
+
+Address, phone aur email ek hi jagah hain — "Contact & footer" me badlein, wo
+contact page aur footer dono par lag jaata hai.
+
+Jo cheezein asli data se banti hain (listings, ilaake, property types, counts)
+wo yahan nahi hain — unka source Listings aur database hai.
+
 ## Purana data (agar pehle se chala rahe the)
 
 Purana server sab kuch `indoredera-api/data.json` me rakhta tha. Use MongoDB me
