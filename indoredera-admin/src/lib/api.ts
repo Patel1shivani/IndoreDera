@@ -9,8 +9,7 @@ import type { Banner, HeroContent, Plan, Property, Testimonial, User } from "./t
  */
 
 export const API_BASE =
-  (import.meta.env.VITE_API_BASE as string | undefined) ?? "http://localhost:4000";
-
+ Backend nahi chal raha
 const TOKEN_KEY = "indoredera-admin:token";
 
 export class ApiError extends Error {
